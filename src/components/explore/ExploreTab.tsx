@@ -1,4 +1,6 @@
 import { Chip } from "@/components/ui/Chip";
+import { MetricPill } from "@/components/ui/MetricPill";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { applyFeedbackAction } from "@/lib/feedback";
 import type { Food, FoodFeedback, UserMemory } from "@/types";
 import { useState } from "react";
@@ -35,12 +37,21 @@ export function ExploreTab({
   };
 
   return (
-    <div className="space-y-4 pb-24">
-      <header>
-        <h1 className="text-3xl font-black text-stone-950">自己逛逛</h1>
-        <p className="mt-2 text-sm text-stone-500">搜索菜品、窗口和同学反馈；这些反馈会成为推荐依据。</p>
+    <div className="space-y-4 pb-3">
+      <header className="rounded-[1.7rem] border border-white/80 bg-white/78 p-5 shadow-[0_18px_45px_rgba(41,37,30,0.10)] backdrop-blur">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-black text-orange-600">校园轻量点评</p>
+            <h1 className="mt-1 text-[2rem] font-black leading-tight text-stone-950">逛食堂</h1>
+          </div>
+          <MetricPill tone="amber">{filtered.length} 个结果</MetricPill>
+        </div>
+        <p className="mt-3 text-sm leading-6 text-stone-600">搜索菜品、窗口和同学反馈；你的点赞和标签会进入推荐依据。</p>
       </header>
-      <input className="w-full rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-400" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索菜品 / 食堂 / 窗口" />
+      <label className="flex items-center gap-2 rounded-3xl border border-stone-200 bg-white/90 px-4 py-3 shadow-sm focus-within:border-emerald-400 focus-within:ring-4 focus-within:ring-emerald-100">
+        <span className="text-stone-400">⌕</span>
+        <input className="w-full bg-transparent text-sm font-semibold text-stone-800 outline-none placeholder:text-stone-400" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索菜品 / 食堂 / 窗口 / 标签" />
+      </label>
       <div className="flex gap-2 overflow-x-auto pb-1">
         <Chip tone={!activeTag ? "green" : "neutral"} onClick={() => setActiveTag("")}>
           全部
@@ -52,62 +63,70 @@ export function ExploreTab({
         ))}
       </div>
       <section>
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-base font-black text-stone-900">热门 Top 5</h2>
-          <span className="text-xs font-bold text-emerald-700">来自点赞和反馈</span>
-        </div>
+        <SectionHeader title="热门 Top 5" subtitle="来自点赞、踩和高频反馈。" action={<MetricPill tone="green">同学反馈</MetricPill>} />
         <div className="flex gap-2 overflow-x-auto pb-2">
           {popular.map((food, index) => (
-            <button key={food.id} className="min-w-44 rounded-lg border border-stone-200 bg-white p-3 text-left shadow-sm" onClick={() => setSelected(food)} type="button">
-              <span className="text-xs font-black text-amber-700">#{index + 1}</span>
-              <p className="mt-1 font-black text-stone-900">{food.name}</p>
-              <p className="text-xs text-stone-500">
-                👍{food.feedback.likes} 👎{food.feedback.dislikes}
+            <button key={food.id} className="mt-3 min-w-48 rounded-[1.25rem] border border-stone-200 bg-white p-3 text-left shadow-[0_10px_24px_rgba(41,37,30,0.07)] transition active:scale-[0.99]" onClick={() => setSelected(food)} type="button">
+              <div className="flex items-center justify-between">
+                <MetricPill tone={index === 0 ? "amber" : "neutral"}>#{index + 1}</MetricPill>
+                <span className="text-sm font-black text-red-600">¥{food.price}</span>
+              </div>
+              <p className="mt-2 line-clamp-1 font-black text-stone-950">{food.name}</p>
+              <p className="mt-1 text-xs leading-5 text-stone-500">
+                {food.canteen} · 👍{food.feedback.likes} 👎{food.feedback.dislikes}
               </p>
             </button>
           ))}
         </div>
       </section>
       <section className="space-y-3">
+        <SectionHeader title="菜品列表" subtitle={query || activeTag ? "已按当前条件筛选。" : "按食堂、价格和同学反馈快速扫一遍。"} />
         {filtered.map((food) => (
-          <button key={food.id} className="w-full rounded-lg border border-stone-200 bg-white p-4 text-left shadow-sm" type="button" onClick={() => setSelected(food)}>
+          <button key={food.id} className="w-full rounded-[1.35rem] border border-stone-200 bg-white/95 p-4 text-left shadow-[0_12px_28px_rgba(41,37,30,0.07)] transition active:scale-[0.99]" type="button" onClick={() => setSelected(food)}>
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-black text-stone-900">{food.name}</h3>
+                <h3 className="text-lg font-black leading-tight text-stone-950">{food.name}</h3>
                 <p className="mt-1 text-xs text-stone-500">
                   {food.canteen} · {food.stall}
                 </p>
               </div>
-              <span className="font-black text-red-600">¥{food.price}</span>
+              <MetricPill tone="red">¥{food.price}</MetricPill>
             </div>
-            <p className="mt-2 text-xs text-stone-500">
-              👍{food.feedback.likes} 👎{food.feedback.dislikes} · {food.tags.slice(0, 3).join(" / ")}
-            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <MetricPill tone="green">赞 {food.feedback.likes}</MetricPill>
+              <MetricPill tone="neutral">踩 {food.feedback.dislikes}</MetricPill>
+              {food.tags.slice(0, 3).map((tag) => (
+                <MetricPill key={tag}>{tag}</MetricPill>
+              ))}
+            </div>
           </button>
         ))}
       </section>
       {selected && (
-        <div className="fixed inset-0 z-20 flex items-end bg-black/30 px-3 pb-3" onClick={() => setSelected(null)}>
-          <div className="max-h-[82vh] w-full overflow-auto rounded-2xl bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        <div className="fixed inset-0 z-20 flex items-end bg-stone-950/35 px-3 pb-3 backdrop-blur-[2px]" onClick={() => setSelected(null)}>
+          <div className="max-h-[84vh] w-full overflow-auto rounded-[1.7rem] bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-stone-200" />
             <div className="mb-3 flex items-start justify-between">
               <div>
-                <h2 className="text-2xl font-black">{selected.name}</h2>
+                <p className="text-xs font-black text-orange-600">菜品详情</p>
+                <h2 className="mt-1 text-2xl font-black leading-tight text-stone-950">{selected.name}</h2>
                 <p className="mt-1 text-sm text-stone-500">
-                  {selected.canteen} · {selected.stall} · ¥{selected.price}
+                  {selected.canteen} · {selected.stall}
                 </p>
               </div>
-              <button className="text-xl text-stone-400" onClick={() => setSelected(null)} type="button">
+              <button className="flex h-9 w-9 items-center justify-center rounded-full bg-stone-100 text-xl text-stone-500" onClick={() => setSelected(null)} type="button">
                 ×
               </button>
             </div>
+            <MetricPill tone="red">¥{selected.price}</MetricPill>
             <p className="text-sm leading-6 text-stone-600">{selected.description}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {selected.tags.map((tag) => (
                 <Chip key={tag}>{tag}</Chip>
               ))}
             </div>
-            <div className="mt-4 rounded-lg bg-stone-50 p-3">
-              <p className="text-sm font-black">学生反馈</p>
+            <div className="mt-4 rounded-[1.25rem] border border-stone-100 bg-stone-50 p-3">
+              <p className="text-sm font-black text-stone-950">学生反馈</p>
               <p className="mt-1 text-xs text-stone-500">
                 👍{selected.feedback.likes} 👎{selected.feedback.dislikes}
               </p>
@@ -131,10 +150,10 @@ export function ExploreTab({
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <button className="rounded-lg bg-emerald-700 py-2 text-sm font-black text-white" onClick={() => submitFeedback(selected.id, "like")} type="button">
+              <button className="rounded-2xl bg-emerald-700 py-2.5 text-sm font-black text-white shadow-sm" onClick={() => submitFeedback(selected.id, "like")} type="button">
                 点赞
               </button>
-              <button className="rounded-lg border border-stone-200 py-2 text-sm font-bold" onClick={() => submitFeedback(selected.id, "dislike")} type="button">
+              <button className="rounded-2xl border border-stone-200 bg-white py-2.5 text-sm font-bold" onClick={() => submitFeedback(selected.id, "dislike")} type="button">
                 不推荐
               </button>
             </div>
