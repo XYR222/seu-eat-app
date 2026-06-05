@@ -1,15 +1,18 @@
 import { Chip } from "@/components/ui/Chip";
+import { MetricPill } from "@/components/ui/MetricPill";
 import type { Food, FoodFeedback, Recommendation, UserMemory } from "@/types";
 
 type FoodWithFeedback = Food & { feedback: FoodFeedback };
 
 export function RecommendationCard({
+  rank,
   recommendation,
   foods,
   onAte,
   onAvoid,
   onPatch,
 }: {
+  rank: number;
   recommendation: Recommendation;
   foods: FoodWithFeedback[];
   onAte: (foodId: string) => void;
@@ -19,15 +22,23 @@ export function RecommendationCard({
   const food = foods.find((item) => item.id === recommendation.foodId);
   if (!food) return null;
   return (
-    <article className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+    <article className="overflow-hidden rounded-[1.45rem] border border-stone-200 bg-white shadow-[0_16px_36px_rgba(41,37,30,0.09)]">
+      <div className="flex items-center justify-between border-b border-stone-100 bg-stone-50/80 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <MetricPill tone="green">推荐 {rank}</MetricPill>
+          <MetricPill tone="neutral">{food.distanceLevel === "near" ? "距离近" : food.distanceLevel === "medium" ? "距离适中" : "稍远"}</MetricPill>
+        </div>
+        <MetricPill tone="red">¥{food.price}</MetricPill>
+      </div>
+      <div className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-black text-stone-900">{food.name}</h3>
+          <h3 className="text-xl font-black leading-tight text-stone-950">{food.name}</h3>
           <p className="mt-1 text-xs text-stone-500">
             {food.canteen} · {food.stall}
           </p>
         </div>
-        <span className="text-lg font-black text-red-600">¥{food.price}</span>
+        <span className="text-xs font-black text-emerald-700">匹配 {Math.round(recommendation.score)}</span>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         {food.tags.slice(0, 5).map((tag) => (
@@ -36,20 +47,24 @@ export function RecommendationCard({
           </span>
         ))}
       </div>
-      <p className="mt-3 text-sm leading-6 text-stone-700">{recommendation.reason}</p>
-      <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">可能缺点：{recommendation.risk}</p>
-      <div className="mt-3 space-y-1">
+      <div className="mt-4 rounded-2xl bg-emerald-50 px-3 py-3">
+        <p className="text-xs font-black text-emerald-800">为什么推荐</p>
+        <p className="mt-1 text-sm leading-6 text-stone-700">{recommendation.reason}</p>
+      </div>
+      <p className="mt-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">可能缺点：{recommendation.risk}</p>
+      <div className="mt-3 space-y-1 rounded-2xl border border-stone-100 bg-stone-50 px-3 py-2">
+        <p className="text-xs font-black text-stone-700">证据</p>
         {recommendation.evidence.map((item) => (
-          <p className="text-xs text-stone-500" key={item}>
-            · {item}
+          <p className="text-xs leading-5 text-stone-500" key={item}>
+            {item}
           </p>
         ))}
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2">
-        <button className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-black text-white" type="button" onClick={() => onAte(food.id)}>
+        <button className="rounded-2xl bg-emerald-700 px-3 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-800 active:scale-[0.99]" type="button" onClick={() => onAte(food.id)}>
           就吃这个
         </button>
-        <button className="rounded-lg border border-stone-200 px-3 py-2 text-sm font-bold text-stone-700" type="button" onClick={() => onAvoid(food.id)}>
+        <button className="rounded-2xl border border-stone-200 bg-white px-3 py-2.5 text-sm font-bold text-stone-700 transition hover:bg-stone-50 active:scale-[0.99]" type="button" onClick={() => onAvoid(food.id)}>
           不喜欢
         </button>
       </div>
@@ -63,6 +78,7 @@ export function RecommendationCard({
         <Chip tone="green" onClick={() => onPatch({ preferTags: ["清淡"] })}>
           想清淡
         </Chip>
+      </div>
       </div>
     </article>
   );

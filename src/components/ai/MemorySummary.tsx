@@ -30,13 +30,13 @@ export function MemorySummary({
   ];
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-stone-50 p-3">
+    <section className="rounded-[1.35rem] border border-emerald-100 bg-white/82 p-3.5 shadow-sm">
       <div className="mb-2 flex items-center justify-between">
         <div>
-          <p className="text-xs font-bold text-stone-700">AI 记住了什么</p>
-          <p className="text-[11px] text-stone-500">来自你的询问和反馈，可随时删除。</p>
+          <p className="text-xs font-black text-emerald-800">AI 已参考</p>
+          <p className="text-[11px] leading-5 text-stone-500">来自你的询问和反馈，只保存饮食偏好。</p>
         </div>
-        <button className="text-xs font-bold text-stone-500" onClick={onClear} type="button">
+        <button className="rounded-full px-2 py-1 text-xs font-bold text-stone-500 transition hover:bg-stone-100" onClick={onClear} type="button">
           清空
         </button>
       </div>
