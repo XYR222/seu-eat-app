@@ -1,4 +1,6 @@
 import { Chip } from "@/components/ui/Chip";
+import { MetricPill } from "@/components/ui/MetricPill";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { foodItems } from "@/data/foods";
 import { drawMealCards } from "@/lib/draw";
 import type { DrawCard, Food, FoodFeedback, UserMemory } from "@/types";
@@ -20,48 +22,66 @@ export function DrawMealTab({
   const [cards, setCards] = useState<DrawCard[]>([]);
   const draw = () => setCards(drawMealCards(foodItems, feedback, memory));
   const foodMap = new Map(foods.map((food) => [food.id, food]));
+  const avoidedText =
+    memory.avoidTags.length || memory.recentFoods.length
+      ? [...memory.avoidTags.map((tag) => `避开${tag}`), ...memory.recentFoods.map((id) => `最近吃过${foodMap.get(id)?.name ?? id}`)].join("、")
+      : "暂无忌口，先给你抽点稳的。";
+  const toneMap: Record<DrawCard["type"], { wrap: string; pill: "green" | "amber" | "dark"; label: string }> = {
+    safe: { wrap: "border-emerald-200 bg-emerald-50/70", pill: "green", label: "低踩雷" },
+    explore: { wrap: "border-orange-200 bg-orange-50/80", pill: "amber", label: "换窗口" },
+    surprise: { wrap: "border-yellow-200 bg-yellow-50/90", pill: "dark", label: "随机感" },
+  };
 
   return (
-    <div className="space-y-4 pb-24">
-      <header>
-        <h1 className="text-3xl font-black text-stone-950">抽一餐</h1>
-        <p className="mt-2 text-sm leading-6 text-stone-500">不想纠结的时候，从校园菜品库里抽出稳妥、探店和惊喜三个选择。</p>
+    <div className="space-y-4 pb-3">
+      <header className="rounded-[1.7rem] border border-amber-100 bg-gradient-to-br from-white via-amber-50 to-orange-50 p-5 shadow-[0_18px_45px_rgba(120,73,20,0.12)]">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-black text-orange-700">不想纠结</p>
+            <h1 className="mt-1 text-[2rem] font-black leading-tight text-stone-950">抽一餐</h1>
+          </div>
+          <MetricPill tone="amber">3 张卡</MetricPill>
+        </div>
+        <p className="mt-3 text-sm leading-6 text-stone-600">从校园菜品库里抽出稳妥、探店和惊喜三个选择，仍然会参考你的忌口和最近吃过什么。</p>
       </header>
-      <section className="rounded-lg border border-amber-100 bg-amber-50 p-4">
-        <p className="text-xs font-bold text-amber-800">抽卡已避开</p>
-        <p className="mt-1 text-sm text-amber-900">
-          {memory.avoidTags.length || memory.recentFoods.length ? [...memory.avoidTags.map((tag) => `避开${tag}`), ...memory.recentFoods.map((id) => `最近吃过${foodMap.get(id)?.name ?? id}`)].join("、") : "暂无忌口，先给你抽点稳的。"}
-        </p>
-        <button className="mt-4 w-full rounded-lg bg-stone-900 px-4 py-3 text-sm font-black text-white" type="button" onClick={draw}>
+      <section className="rounded-[1.45rem] border border-amber-200 bg-white/85 p-4 shadow-sm">
+        <p className="text-xs font-black text-amber-800">抽卡已避开</p>
+        <p className="mt-1 text-sm leading-6 text-amber-950">{avoidedText}</p>
+        <button className="mt-4 w-full rounded-2xl bg-stone-950 px-4 py-3.5 text-sm font-black text-white shadow-[0_14px_24px_rgba(41,37,30,0.24)] transition hover:bg-stone-800 active:scale-[0.99]" type="button" onClick={draw}>
           开始抽卡
         </button>
       </section>
       <section className="space-y-3">
+        <SectionHeader title="今日三张卡" subtitle="随机但不乱来，仍然基于本地菜品和反馈。" />
         {cards.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-stone-300 bg-white p-6 text-center text-sm text-stone-500">点击抽卡后，会出现稳妥卡、探店卡和惊喜卡。</div>
+          <div className="rounded-[1.35rem] border border-dashed border-amber-300 bg-white/82 p-6 text-center text-sm leading-6 text-stone-500">点击抽卡后，会出现稳妥卡、探店卡和惊喜卡。</div>
         ) : (
           cards.map((card) => {
             const food = foodMap.get(card.foodId);
             if (!food) return null;
+            const tone = toneMap[card.type];
             return (
-              <article key={card.type} className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-                <p className="text-xs font-black text-emerald-700">{card.title}</p>
+              <article key={card.type} className={`rounded-[1.45rem] border p-4 shadow-[0_14px_32px_rgba(41,37,30,0.08)] ${tone.wrap}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-black text-stone-800">{card.title}</p>
+                  <MetricPill tone={tone.pill}>{tone.label}</MetricPill>
+                </div>
                 <div className="mt-2 flex items-start justify-between">
                   <div>
-                    <h3 className="text-xl font-black text-stone-900">{food.name}</h3>
+                    <h3 className="text-xl font-black leading-tight text-stone-950">{food.name}</h3>
                     <p className="mt-1 text-xs text-stone-500">
                       {food.canteen} · {food.stall}
                     </p>
                   </div>
-                  <span className="font-black text-red-600">¥{food.price}</span>
+                  <MetricPill tone="red">¥{food.price}</MetricPill>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {food.tags.slice(0, 4).map((tag) => (
                     <Chip key={tag}>{tag}</Chip>
                   ))}
                 </div>
-                <p className="mt-3 text-sm leading-6 text-stone-600">{card.reason}</p>
-                <button className="mt-4 w-full rounded-lg bg-emerald-700 py-2 text-sm font-black text-white" type="button" onClick={() => onMemoryPatch({ recentFoods: [food.id] })}>
+                <p className="mt-3 rounded-2xl bg-white/70 px-3 py-2 text-sm leading-6 text-stone-700">{card.reason}</p>
+                <button className="mt-4 w-full rounded-2xl bg-emerald-700 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-800 active:scale-[0.99]" type="button" onClick={() => onMemoryPatch({ recentFoods: [food.id] })}>
                   就它了
                 </button>
               </article>
