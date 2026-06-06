@@ -8,7 +8,7 @@ import { feedbackItems as initialFeedback } from "@/data/feedback";
 import { foodItems } from "@/data/foods";
 import { defaultMemory, mergeMemoryPatch, readMemory, removeMemoryValue, writeMemory } from "@/lib/memory";
 import type { Food, FoodFeedback, UserMemory } from "@/types";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export type TabId = "ai" | "explore" | "draw";
 type FoodWithFeedback = Food & { feedback: FoodFeedback };
@@ -23,8 +23,13 @@ function mergeFoodFeedback(feedback: FoodFeedback[]): FoodWithFeedback[] {
 export function AppShell() {
   const [tab, setTab] = useState<TabId>("ai");
   const [feedback, setFeedback] = useState<FoodFeedback[]>(initialFeedback);
-  const [memory, setMemory] = useState<UserMemory>(() => readMemory());
+  const [memory, setMemory] = useState<UserMemory>(() => defaultMemory());
   const foods = useMemo(() => mergeFoodFeedback(feedback), [feedback]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setMemory(readMemory()), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const updateMemory = (patch: Partial<UserMemory>) => {
     setMemory((current) => {
