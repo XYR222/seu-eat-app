@@ -22,6 +22,15 @@ export type FoodFeedback = {
   comments: string[];
 };
 
+export type StallFeedback = {
+  stallKey: string;
+  canteen: string;
+  stall: string;
+  likes: number;
+  dislikes: number;
+  comments: string[];
+};
+
 export type UserMemory = {
   budgetMax?: number;
   preferTags: string[];

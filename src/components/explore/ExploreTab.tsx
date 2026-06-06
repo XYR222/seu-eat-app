@@ -1,9 +1,12 @@
 import { Chip } from "@/components/ui/Chip";
 import { FoodDetailSheet } from "@/components/food/FoodDetailSheet";
+import { StallDetailSheet } from "@/components/food/StallDetailSheet";
 import { MetricPill } from "@/components/ui/MetricPill";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { buildStallKey } from "@/lib/feedback-store";
 import { applyFoodDetailFeedback } from "@/lib/food-detail";
-import type { Food, FoodFeedback, UserMemory } from "@/types";
+import { applyStallDetailFeedback } from "@/lib/food-detail";
+import type { Food, FoodFeedback, StallFeedback, UserMemory } from "@/types";
 import { useState } from "react";
 
 type FoodWithFeedback = Food & { feedback: FoodFeedback };
@@ -13,28 +16,38 @@ const filterTags = ["清淡", "不辣", "高蛋白", "热汤", "面食", "米饭
 export function ExploreTab({
   foods,
   feedback,
+  stallFeedback,
   setFeedback,
+  setStallFeedback,
   onMemoryPatch,
 }: {
   foods: FoodWithFeedback[];
   feedback: FoodFeedback[];
+  stallFeedback: StallFeedback[];
   setFeedback: (items: FoodFeedback[]) => void;
+  setStallFeedback: (items: StallFeedback[]) => void;
   onMemoryPatch: (patch: Partial<UserMemory>) => void;
 }) {
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState("");
-  const [selected, setSelected] = useState<FoodWithFeedback | null>(null);
+  const [selectedFoodId, setSelectedFoodId] = useState<string | null>(null);
+  const [selectedStallKey, setSelectedStallKey] = useState<string | null>(null);
   const filtered = foods.filter((food) => {
     const text = [food.name, food.canteen, food.stall, food.description, ...food.tags].join(" ");
     return (!query || text.includes(query)) && (!activeTag || food.tags.includes(activeTag));
   });
   const popular = [...foods].sort((a, b) => b.feedback.likes - b.feedback.dislikes - (a.feedback.likes - a.feedback.dislikes)).slice(0, 5);
+  const selected = selectedFoodId ? foods.find((food) => food.id === selectedFoodId) ?? null : null;
 
-  const submitFeedback = (foodId: string, type: "like" | "dislike" | "tag", tag?: string) => {
-    const result = applyFoodDetailFeedback(feedback, type === "tag" ? { type, foodId, tag: tag ?? "出餐快" } : { type, foodId });
+  const submitFeedback = (foodId: string, type: "like" | "dislike" | "tag" | "comment", value?: string) => {
+    const result = applyFoodDetailFeedback(feedback, type === "tag" ? { type, foodId, tag: value ?? "出餐快" } : type === "comment" ? { type, foodId, comment: value ?? "" } : { type, foodId });
     setFeedback(result.feedback);
     onMemoryPatch(result.memoryPatch);
   };
+  const submitStallFeedback = (stallKey: string, type: "like" | "dislike" | "comment", comment?: string) => {
+    setStallFeedback(applyStallDetailFeedback(stallFeedback, type === "comment" ? { type, stallKey, comment: comment ?? "" } : { type, stallKey }));
+  };
+  const selectedStall = selectedStallKey ? stallFeedback.find((item) => item.stallKey === selectedStallKey) : undefined;
 
   return (
     <div className="space-y-4 pb-3">
@@ -66,7 +79,7 @@ export function ExploreTab({
         <SectionHeader title="热门 Top 5" subtitle="来自点赞、踩和高频反馈。" action={<MetricPill tone="green">同学反馈</MetricPill>} />
         <div className="flex gap-2 overflow-x-auto pb-2">
           {popular.map((food, index) => (
-            <button key={food.id} className="mt-3 min-w-48 rounded-[1.25rem] border border-stone-200 bg-white p-3 text-left shadow-[0_10px_24px_rgba(41,37,30,0.07)] transition active:scale-[0.99]" onClick={() => setSelected(food)} type="button">
+            <button key={food.id} className="mt-3 min-w-48 rounded-[1.25rem] border border-stone-200 bg-white p-3 text-left shadow-[0_10px_24px_rgba(41,37,30,0.07)] transition active:scale-[0.99]" onClick={() => setSelectedFoodId(food.id)} type="button">
               <div className="flex items-center justify-between">
                 <MetricPill tone={index === 0 ? "amber" : "neutral"}>#{index + 1}</MetricPill>
                 <span className="text-sm font-black text-red-600">¥{food.price}</span>
@@ -82,7 +95,7 @@ export function ExploreTab({
       <section className="space-y-3">
         <SectionHeader title="菜品列表" subtitle={query || activeTag ? "已按当前条件筛选。" : "按食堂、价格和同学反馈快速扫一遍。"} />
         {filtered.map((food) => (
-          <button key={food.id} className="w-full rounded-[1.35rem] border border-stone-200 bg-white/95 p-4 text-left shadow-[0_12px_28px_rgba(41,37,30,0.07)] transition active:scale-[0.99]" type="button" onClick={() => setSelected(food)}>
+          <button key={food.id} className="w-full rounded-[1.35rem] border border-stone-200 bg-white/95 p-4 text-left shadow-[0_12px_28px_rgba(41,37,30,0.07)] transition active:scale-[0.99]" type="button" onClick={() => setSelectedFoodId(food.id)}>
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-lg font-black leading-tight text-stone-950">{food.name}</h3>
@@ -102,7 +115,8 @@ export function ExploreTab({
           </button>
         ))}
       </section>
-      {selected && <FoodDetailSheet food={selected} onClose={() => setSelected(null)} onFeedback={submitFeedback} />}
+      {selected && <FoodDetailSheet food={selected} onClose={() => setSelectedFoodId(null)} onFeedback={submitFeedback} onOpenStall={() => setSelectedStallKey(buildStallKey(selected.canteen, selected.stall))} />}
+      {selectedStall && <StallDetailSheet stall={selectedStall} foods={foods} foodFeedback={feedback} onClose={() => setSelectedStallKey(null)} onFeedback={submitStallFeedback} />}
     </div>
   );
 }

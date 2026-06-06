@@ -1,11 +1,13 @@
 import { Chip } from "@/components/ui/Chip";
 import { FoodDetailSheet } from "@/components/food/FoodDetailSheet";
+import { StallDetailSheet } from "@/components/food/StallDetailSheet";
 import { MetricPill } from "@/components/ui/MetricPill";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { foodItems } from "@/data/foods";
 import { drawMealCards } from "@/lib/draw";
-import { applyFoodDetailFeedback } from "@/lib/food-detail";
-import type { DrawCard, Food, FoodFeedback, UserMemory } from "@/types";
+import { buildStallKey } from "@/lib/feedback-store";
+import { applyFoodDetailFeedback, applyStallDetailFeedback } from "@/lib/food-detail";
+import type { DrawCard, Food, FoodFeedback, StallFeedback, UserMemory } from "@/types";
 import { useState } from "react";
 
 type FoodWithFeedback = Food & { feedback: FoodFeedback };
@@ -13,19 +15,24 @@ type FoodWithFeedback = Food & { feedback: FoodFeedback };
 export function DrawMealTab({
   foods,
   feedback,
+  stallFeedback,
   setFeedback,
+  setStallFeedback,
   memory,
   onMemoryPatch,
 }: {
   foods: FoodWithFeedback[];
   feedback: FoodFeedback[];
+  stallFeedback: StallFeedback[];
   setFeedback: (items: FoodFeedback[]) => void;
+  setStallFeedback: (items: StallFeedback[]) => void;
   memory: UserMemory;
   onMemoryPatch: (patch: Partial<UserMemory>) => void;
 }) {
   const [cards, setCards] = useState<DrawCard[]>([]);
   const [drawCount, setDrawCount] = useState(0);
-  const [selected, setSelected] = useState<FoodWithFeedback | null>(null);
+  const [selectedFoodId, setSelectedFoodId] = useState<string | null>(null);
+  const [selectedStallKey, setSelectedStallKey] = useState<string | null>(null);
   const draw = () =>
     setCards((current) => {
       const next = drawMealCards(foodItems, feedback, memory, { previousFoodIds: current.map((card) => card.foodId) });
@@ -42,11 +49,16 @@ export function DrawMealTab({
     explore: { wrap: "border-orange-200 bg-orange-50/80", pill: "amber", label: "换窗口" },
     surprise: { wrap: "border-yellow-200 bg-yellow-50/90", pill: "dark", label: "随机感" },
   };
-  const submitFeedback = (foodId: string, type: "like" | "dislike" | "tag", tag?: string) => {
-    const result = applyFoodDetailFeedback(feedback, type === "tag" ? { type, foodId, tag: tag ?? "出餐快" } : { type, foodId });
+  const selected = selectedFoodId ? foods.find((food) => food.id === selectedFoodId) ?? null : null;
+  const submitFeedback = (foodId: string, type: "like" | "dislike" | "tag" | "comment", value?: string) => {
+    const result = applyFoodDetailFeedback(feedback, type === "tag" ? { type, foodId, tag: value ?? "出餐快" } : type === "comment" ? { type, foodId, comment: value ?? "" } : { type, foodId });
     setFeedback(result.feedback);
     onMemoryPatch(result.memoryPatch);
   };
+  const submitStallFeedback = (stallKey: string, type: "like" | "dislike" | "comment", comment?: string) => {
+    setStallFeedback(applyStallDetailFeedback(stallFeedback, type === "comment" ? { type, stallKey, comment: comment ?? "" } : { type, stallKey }));
+  };
+  const selectedStall = selectedStallKey ? stallFeedback.find((item) => item.stallKey === selectedStallKey) : undefined;
 
   return (
     <div className="space-y-4 pb-3">
@@ -77,7 +89,7 @@ export function DrawMealTab({
             if (!food) return null;
             const tone = toneMap[card.type];
             return (
-              <article key={card.type} className={`rounded-[1.45rem] border p-4 text-left shadow-[0_14px_32px_rgba(41,37,30,0.08)] transition active:scale-[0.99] ${tone.wrap}`} onClick={() => setSelected(food)}>
+              <article key={card.type} className={`rounded-[1.45rem] border p-4 text-left shadow-[0_14px_32px_rgba(41,37,30,0.08)] transition active:scale-[0.99] ${tone.wrap}`} onClick={() => setSelectedFoodId(food.id)}>
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-black text-stone-800">{card.title}</p>
                   <MetricPill tone={tone.pill}>{tone.label}</MetricPill>
@@ -112,7 +124,8 @@ export function DrawMealTab({
           })
         )}
       </section>
-      {selected && <FoodDetailSheet food={selected} onClose={() => setSelected(null)} onFeedback={submitFeedback} />}
+      {selected && <FoodDetailSheet food={selected} onClose={() => setSelectedFoodId(null)} onFeedback={submitFeedback} onOpenStall={() => setSelectedStallKey(buildStallKey(selected.canteen, selected.stall))} />}
+      {selectedStall && <StallDetailSheet stall={selectedStall} foods={foods} foodFeedback={feedback} onClose={() => setSelectedStallKey(null)} onFeedback={submitStallFeedback} />}
     </div>
   );
 }

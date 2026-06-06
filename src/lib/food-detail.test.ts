@@ -18,4 +18,11 @@ describe("applyFoodDetailFeedback", () => {
     expect(result.feedback.find((item) => item.foodId === "food_001")?.tagVotes["偏咸"]).toBeGreaterThan(0);
     expect(result.memoryPatch).toEqual({ avoidTags: ["偏咸"] });
   });
+
+  it("adds normalized food comments to the top of the food comments list", () => {
+    const result = applyFoodDetailFeedback(feedbackItems, { type: "comment", foodId: "food_001", comment: "  今天番茄味很足  " });
+
+    expect(result.feedback.find((item) => item.foodId === "food_001")?.comments[0]).toBe("今天番茄味很足");
+    expect(result.memoryPatch).toEqual({});
+  });
 });
