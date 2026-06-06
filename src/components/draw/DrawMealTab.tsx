@@ -8,6 +8,7 @@ import { drawMealCards } from "@/lib/draw";
 import { buildStallKey } from "@/lib/feedback-store";
 import { applyFoodDetailFeedback, applyStallDetailFeedback } from "@/lib/food-detail";
 import { isFavoriteFood } from "@/lib/my-store";
+import type { FeedbackEventRequest } from "@/lib/shared-feedback";
 import type { DrawCard, FavoriteFood, Food, FoodFeedback, StallFeedback, UserMemory } from "@/types";
 import { useState } from "react";
 
@@ -24,6 +25,7 @@ export function DrawMealTab({
   onMealSelected,
   favorites,
   onToggleFavorite,
+  onSharedFeedback,
 }: {
   foods: FoodWithFeedback[];
   feedback: FoodFeedback[];
@@ -35,6 +37,7 @@ export function DrawMealTab({
   onMealSelected: (foodId: string) => void;
   favorites: FavoriteFood[];
   onToggleFavorite: (foodId: string) => void;
+  onSharedFeedback: (event: Omit<FeedbackEventRequest, "deviceId">) => void;
 }) {
   const [cards, setCards] = useState<DrawCard[]>([]);
   const [drawCount, setDrawCount] = useState(0);
@@ -61,9 +64,11 @@ export function DrawMealTab({
     const result = applyFoodDetailFeedback(feedback, type === "tag" ? { type, foodId, tag: value ?? "出餐快" } : type === "comment" ? { type, foodId, comment: value ?? "" } : { type, foodId });
     setFeedback(result.feedback);
     onMemoryPatch(result.memoryPatch);
+    onSharedFeedback({ scope: "food", eventType: type, foodId, tag: type === "tag" ? value : undefined, comment: type === "comment" ? value : undefined });
   };
   const submitStallFeedback = (stallKey: string, type: "like" | "dislike" | "comment", comment?: string) => {
     setStallFeedback(applyStallDetailFeedback(stallFeedback, type === "comment" ? { type, stallKey, comment: comment ?? "" } : { type, stallKey }));
+    onSharedFeedback({ scope: "stall", eventType: type, stallKey, comment: type === "comment" ? comment : undefined });
   };
   const selectedStall = selectedStallKey ? stallFeedback.find((item) => item.stallKey === selectedStallKey) : undefined;
 

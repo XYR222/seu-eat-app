@@ -7,6 +7,7 @@ import { getCanteenSummaries, getFoodsForStall, getStallsForCanteen } from "@/li
 import { buildStallKey } from "@/lib/feedback-store";
 import { applyFoodDetailFeedback, applyStallDetailFeedback } from "@/lib/food-detail";
 import { isFavoriteFood } from "@/lib/my-store";
+import type { FeedbackEventRequest } from "@/lib/shared-feedback";
 import type { FavoriteFood, Food, FoodFeedback, StallFeedback, UserMemory } from "@/types";
 import { useState } from "react";
 
@@ -47,6 +48,7 @@ export function ExploreTab({
   favorites,
   onToggleFavorite,
   onMealSelected,
+  onSharedFeedback,
 }: {
   foods: FoodWithFeedback[];
   feedback: FoodFeedback[];
@@ -57,6 +59,7 @@ export function ExploreTab({
   favorites: FavoriteFood[];
   onToggleFavorite: (foodId: string) => void;
   onMealSelected: (foodId: string) => void;
+  onSharedFeedback: (event: Omit<FeedbackEventRequest, "deviceId">) => void;
 }) {
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState("");
@@ -81,15 +84,12 @@ export function ExploreTab({
     const result = applyFoodDetailFeedback(feedback, type === "tag" ? { type, foodId, tag: value ?? "出餐快" } : type === "comment" ? { type, foodId, comment: value ?? "" } : { type, foodId });
     setFeedback(result.feedback);
     onMemoryPatch(result.memoryPatch);
+    onSharedFeedback({ scope: "food", eventType: type, foodId, tag: type === "tag" ? value : undefined, comment: type === "comment" ? value : undefined });
   };
 
   const submitStallFeedback = (stallKey: string, type: "like" | "dislike" | "comment", comment?: string) => {
     setStallFeedback(applyStallDetailFeedback(stallFeedback, type === "comment" ? { type, stallKey, comment: comment ?? "" } : { type, stallKey }));
-  };
-
-  const openCanteen = (canteen: string) => {
-    setSelectedCanteen(canteen);
-    setSelectedBrowseStall(null);
+    onSharedFeedback({ scope: "stall", eventType: type, stallKey, comment: type === "comment" ? comment : undefined });
   };
 
   return (
@@ -124,7 +124,7 @@ export function ExploreTab({
       <section className="space-y-3">
         <SectionHeader
           title={selectedCanteen ? selectedCanteen : "按食堂逛"}
-          subtitle={selectedBrowseStall ? `${selectedBrowseStall} · ${stallFoods.length} 个菜品` : selectedCanteen ? `${canteenStalls.length} 个窗口，继续选择窗口看菜品` : "不想搜索时，直接从食堂入口进入。"}
+          subtitle={selectedBrowseStall ? `${selectedBrowseStall} / ${stallFoods.length} 个菜品` : selectedCanteen ? `${canteenStalls.length} 个窗口，继续选择窗口看菜品` : "不想搜索时，直接从食堂入口进入。"}
           action={
             selectedCanteen ? (
               <Chip
@@ -144,18 +144,13 @@ export function ExploreTab({
         {!selectedCanteen && (
           <div className="grid grid-cols-2 gap-3">
             {canteens.map((item, index) => (
-              <button key={item.canteen} className="rounded-[1.35rem] border border-stone-200 bg-white/95 p-4 text-left shadow-[0_12px_28px_rgba(41,37,30,0.07)] transition active:scale-[0.99]" type="button" onClick={() => openCanteen(item.canteen)}>
+              <button key={item.canteen} className="rounded-[1.35rem] border border-stone-200 bg-white/95 p-4 text-left shadow-[0_12px_28px_rgba(41,37,30,0.07)] transition active:scale-[0.99]" type="button" onClick={() => setSelectedCanteen(item.canteen)}>
                 <div className="flex items-start justify-between gap-3">
                   <span className="flex size-10 items-center justify-center rounded-2xl bg-emerald-50 text-lg font-black text-emerald-800">{index + 1}</span>
                   <MetricPill tone="amber">{item.foodCount} 菜</MetricPill>
                 </div>
                 <h3 className="mt-3 line-clamp-1 text-base font-black text-stone-950">{item.canteen}</h3>
                 <p className="mt-1 text-xs font-bold text-stone-500">{item.stallCount} 个窗口</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {item.tags.map((tag) => (
-                    <MetricPill key={tag}>{tag}</MetricPill>
-                  ))}
-                </div>
               </button>
             ))}
           </div>
@@ -171,11 +166,6 @@ export function ExploreTab({
                     <p className="mt-1 text-xs text-stone-500">{item.canteen}</p>
                   </div>
                   <MetricPill tone="green">{item.foodCount} 个菜</MetricPill>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {item.tags.map((tag) => (
-                    <MetricPill key={tag}>{tag}</MetricPill>
-                  ))}
                 </div>
               </button>
             ))}

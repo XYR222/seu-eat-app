@@ -8,6 +8,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { buildStallKey } from "@/lib/feedback-store";
 import { applyFoodDetailFeedback, applyStallDetailFeedback } from "@/lib/food-detail";
 import { isFavoriteFood } from "@/lib/my-store";
+import type { FeedbackEventRequest } from "@/lib/shared-feedback";
 import type { FavoriteFood, Food, FoodFeedback, Recommendation, StallFeedback, UserMemory } from "@/types";
 import { useState } from "react";
 
@@ -29,6 +30,7 @@ export function AiRecommendTab({
   onMealSelected,
   favorites,
   onToggleFavorite,
+  onSharedFeedback,
 }: {
   foods: FoodWithFeedback[];
   feedback: FoodFeedback[];
@@ -42,6 +44,7 @@ export function AiRecommendTab({
   onMealSelected: (foodId: string) => void;
   favorites: FavoriteFood[];
   onToggleFavorite: (foodId: string) => void;
+  onSharedFeedback: (event: Omit<FeedbackEventRequest, "deviceId">) => void;
 }) {
   const [query, setQuery] = useState("15元以内，清淡，不要太咸，离教学楼近");
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -79,10 +82,12 @@ export function AiRecommendTab({
     const result = applyFoodDetailFeedback(feedback, type === "tag" ? { type, foodId, tag: value ?? "出餐快" } : type === "comment" ? { type, foodId, comment: value ?? "" } : { type, foodId });
     setFeedback(result.feedback);
     onMemoryPatch(result.memoryPatch);
+    onSharedFeedback({ scope: "food", eventType: type, foodId, tag: type === "tag" ? value : undefined, comment: type === "comment" ? value : undefined });
   };
 
   const submitStallFeedback = (stallKey: string, type: "like" | "dislike" | "comment", comment?: string) => {
     setStallFeedback(applyStallDetailFeedback(stallFeedback, type === "comment" ? { type, stallKey, comment: comment ?? "" } : { type, stallKey }));
+    onSharedFeedback({ scope: "stall", eventType: type, stallKey, comment: type === "comment" ? comment : undefined });
   };
 
   return (

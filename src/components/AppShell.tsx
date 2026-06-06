@@ -14,6 +14,9 @@ import { buildStallKey } from "@/lib/feedback-store";
 import { applyFoodDetailFeedback, applyStallDetailFeedback } from "@/lib/food-detail";
 import { defaultMemory, mergeMemoryPatch, readMemory, removeMemoryValue, writeMemory } from "@/lib/memory";
 import { addMealHistoryItem, isFavoriteFood, readFavoriteFoods, readMealHistory, toggleFavoriteFood, writeFavoriteFoods, writeMealHistory } from "@/lib/my-store";
+import { readDeviceId } from "@/lib/device-id";
+import { fetchSharedFeedbackSnapshot, postSharedFeedbackEvent } from "@/lib/shared-feedback-client";
+import type { FeedbackEventRequest } from "@/lib/shared-feedback";
 import type { FavoriteFood, Food, FoodFeedback, MealHistoryItem, StallFeedback, UserMemory } from "@/types";
 import { useEffect, useMemo, useState } from "react";
 
@@ -34,6 +37,7 @@ export function AppShell() {
   const [memory, setMemory] = useState<UserMemory>(() => defaultMemory());
   const [history, setHistory] = useState<MealHistoryItem[]>([]);
   const [favorites, setFavorites] = useState<FavoriteFood[]>([]);
+  const [deviceId, setDeviceId] = useState("");
   const [myOpen, setMyOpen] = useState(false);
   const [selectedMyFoodId, setSelectedMyFoodId] = useState<string | null>(null);
   const [selectedMyStallKey, setSelectedMyStallKey] = useState<string | null>(null);
@@ -43,11 +47,19 @@ export function AppShell() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
+      const nextDeviceId = readDeviceId();
       setMemory(readMemory());
-      setFeedback(mergeFoodFeedback(initialFeedback, readStoredFoodFeedback()));
-      setStallFeedback(mergeStallFeedback(createInitialStallFeedback(foodItems), readStoredStallFeedback()));
+      setDeviceId(nextDeviceId);
+      const localFoodFeedback = readStoredFoodFeedback();
+      const localStallFeedback = readStoredStallFeedback();
+      setFeedback(mergeFoodFeedback(initialFeedback, localFoodFeedback));
+      setStallFeedback(mergeStallFeedback(createInitialStallFeedback(foodItems), localStallFeedback));
       setHistory(readMealHistory());
       setFavorites(readFavoriteFoods());
+      void fetchSharedFeedbackSnapshot().then((snapshot) => {
+        setFeedback(mergeFoodFeedback(mergeFoodFeedback(initialFeedback, snapshot.foodFeedback), localFoodFeedback));
+        setStallFeedback(mergeStallFeedback(mergeStallFeedback(createInitialStallFeedback(foodItems), snapshot.stallFeedback), localStallFeedback));
+      });
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
@@ -70,6 +82,12 @@ export function AppShell() {
     });
   };
 
+  const syncSharedFeedback = (event: Omit<FeedbackEventRequest, "deviceId">) => {
+    const id = deviceId || readDeviceId();
+    if (!deviceId) setDeviceId(id);
+    void postSharedFeedbackEvent({ ...event, deviceId: id });
+  };
+
   const addHistory = (foodId: string, source: MealHistoryItem["source"], action: MealHistoryItem["action"] = "ate") => {
     setHistory((current) => {
       const next = addMealHistoryItem(current, { foodId, source, action });
@@ -90,11 +108,13 @@ export function AppShell() {
     const result = applyFoodDetailFeedback(feedback, type === "tag" ? { type, foodId, tag: value ?? "出餐快" } : type === "comment" ? { type, foodId, comment: value ?? "" } : { type, foodId });
     updateFeedback(result.feedback);
     updateMemory(result.memoryPatch);
+    syncSharedFeedback({ scope: "food", eventType: type, foodId, tag: type === "tag" ? value : undefined, comment: type === "comment" ? value : undefined });
     if (type === "dislike") addHistory(foodId, "explore", "disliked");
   };
 
   const submitMyStallFeedback = (stallKey: string, type: "like" | "dislike" | "comment", comment?: string) => {
     updateStallFeedback(applyStallDetailFeedback(stallFeedback, type === "comment" ? { type, stallKey, comment: comment ?? "" } : { type, stallKey }));
+    syncSharedFeedback({ scope: "stall", eventType: type, stallKey, comment: type === "comment" ? comment : undefined });
   };
 
   const removeMemory = (field: keyof UserMemory, value: string) => {
@@ -117,9 +137,9 @@ export function AppShell() {
         我的
       </button>
       <div className="mx-auto min-h-screen max-w-md px-4 pb-28 pt-5">
-        {tab === "ai" && <AiRecommendTab foods={foods} feedback={feedback} stallFeedback={stallFeedback} setFeedback={updateFeedback} setStallFeedback={updateStallFeedback} memory={memory} onMemoryPatch={updateMemory} onMemoryRemove={removeMemory} onMemoryClear={clearMemory} onMealSelected={(foodId) => addHistory(foodId, "ai", "ate")} favorites={favorites} onToggleFavorite={toggleFavorite} />}
-        {tab === "explore" && <ExploreTab foods={foods} feedback={feedback} stallFeedback={stallFeedback} setFeedback={updateFeedback} setStallFeedback={updateStallFeedback} onMemoryPatch={updateMemory} favorites={favorites} onToggleFavorite={toggleFavorite} onMealSelected={(foodId) => addHistory(foodId, "explore", "ate")} />}
-        {tab === "draw" && <DrawMealTab foods={foods} feedback={feedback} stallFeedback={stallFeedback} setFeedback={updateFeedback} setStallFeedback={updateStallFeedback} memory={memory} onMemoryPatch={updateMemory} onMealSelected={(foodId) => addHistory(foodId, "draw", "ate")} favorites={favorites} onToggleFavorite={toggleFavorite} />}
+        {tab === "ai" && <AiRecommendTab foods={foods} feedback={feedback} stallFeedback={stallFeedback} setFeedback={updateFeedback} setStallFeedback={updateStallFeedback} memory={memory} onMemoryPatch={updateMemory} onMemoryRemove={removeMemory} onMemoryClear={clearMemory} onMealSelected={(foodId) => addHistory(foodId, "ai", "ate")} favorites={favorites} onToggleFavorite={toggleFavorite} onSharedFeedback={syncSharedFeedback} />}
+        {tab === "explore" && <ExploreTab foods={foods} feedback={feedback} stallFeedback={stallFeedback} setFeedback={updateFeedback} setStallFeedback={updateStallFeedback} onMemoryPatch={updateMemory} favorites={favorites} onToggleFavorite={toggleFavorite} onMealSelected={(foodId) => addHistory(foodId, "explore", "ate")} onSharedFeedback={syncSharedFeedback} />}
+        {tab === "draw" && <DrawMealTab foods={foods} feedback={feedback} stallFeedback={stallFeedback} setFeedback={updateFeedback} setStallFeedback={updateStallFeedback} memory={memory} onMemoryPatch={updateMemory} onMealSelected={(foodId) => addHistory(foodId, "draw", "ate")} favorites={favorites} onToggleFavorite={toggleFavorite} onSharedFeedback={syncSharedFeedback} />}
       </div>
       <BottomTabs tab={tab} setTab={setTab} />
       {myOpen && <MyRecordsSheet foods={foods} history={history} favorites={favorites} memory={memory} onClose={() => setMyOpen(false)} onOpenFood={setSelectedMyFoodId} onToggleFavorite={toggleFavorite} onMemoryRemove={removeMemory} onMemoryClear={clearMemory} />}
