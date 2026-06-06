@@ -21,6 +21,7 @@ export function RecommendationCard({
 }) {
   const food = foods.find((item) => item.id === recommendation.foodId);
   if (!food) return null;
+  const evidence = Array.isArray(recommendation.evidence) ? recommendation.evidence : [String(recommendation.evidence || `${food.canteen} ${food.stall}`)];
   return (
     <article className="overflow-hidden rounded-[1.45rem] border border-stone-200 bg-white shadow-[0_16px_36px_rgba(41,37,30,0.09)]">
       <div className="flex items-center justify-between border-b border-stone-100 bg-stone-50/80 px-4 py-3">
@@ -54,7 +55,7 @@ export function RecommendationCard({
       <p className="mt-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">可能缺点：{recommendation.risk}</p>
       <div className="mt-3 space-y-1 rounded-2xl border border-stone-100 bg-stone-50 px-3 py-2">
         <p className="text-xs font-black text-stone-700">证据</p>
-        {recommendation.evidence.map((item) => (
+        {evidence.map((item) => (
           <p className="text-xs leading-5 text-stone-500" key={item}>
             {item}
           </p>

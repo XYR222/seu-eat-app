@@ -3,7 +3,37 @@ import { foodItems } from "@/data/foods";
 import { rerankWithDeepSeek } from "@/lib/deepseek";
 import { extractMemoryPatch, mockRerank } from "@/lib/mock-ai";
 import { retrieveCandidates } from "@/lib/rag";
-import type { RecommendRequest, RecommendResponse } from "@/types";
+import type { Candidate, Recommendation, RecommendRequest, RecommendResponse } from "@/types";
+
+const fallbackReason = "它是当前候选里综合反馈比较稳的一项。";
+
+function normalizeEvidence(evidence: unknown, candidate: Candidate): string[] {
+  if (Array.isArray(evidence)) {
+    const normalized = evidence.map((item) => String(item).trim()).filter(Boolean);
+    if (normalized.length) return normalized;
+  }
+  if (typeof evidence === "string" && evidence.trim()) return [evidence.trim()];
+  return candidate.evidence.length > 0 ? candidate.evidence : [`${candidate.food.canteen} ${candidate.food.stall}`, `价格${candidate.food.price}元`];
+}
+
+export function sanitizeRecommendations(recommendations: Recommendation[], candidates: Candidate[]): Recommendation[] {
+  const candidateMap = new Map(candidates.map((candidate) => [candidate.food.id, candidate]));
+
+  return recommendations.flatMap((recommendation) => {
+    const candidate = candidateMap.get(recommendation.foodId);
+    if (!candidate) return [];
+    const score = Number(recommendation.score);
+    return [
+      {
+        foodId: candidate.food.id,
+        score: Number.isFinite(score) ? score : Math.max(70, Math.round(candidate.score)),
+        reason: typeof recommendation.reason === "string" && recommendation.reason.trim() ? recommendation.reason.trim() : fallbackReason,
+        risk: typeof recommendation.risk === "string" && recommendation.risk.trim() ? recommendation.risk.trim() : candidate.risk,
+        evidence: normalizeEvidence(recommendation.evidence, candidate),
+      },
+    ];
+  });
+}
 
 export async function recommendMeals(request: RecommendRequest): Promise<RecommendResponse> {
   const candidates = retrieveCandidates({
@@ -18,8 +48,7 @@ export async function recommendMeals(request: RecommendRequest): Promise<Recomme
     memory: request.memory,
     candidates,
   });
-  const candidateIds = new Set(candidates.map((candidate) => candidate.food.id));
-  const safeRecommendations = recommendations.filter((recommendation) => candidateIds.has(recommendation.foodId));
+  const safeRecommendations = sanitizeRecommendations(recommendations, candidates);
   const memoryPatch = extractMemoryPatch(request.query);
 
   return {
