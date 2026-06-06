@@ -1,4 +1,5 @@
 import type { FavoriteFood, MealHistoryItem } from "@/types";
+import { scopedStorageKey } from "@/lib/storage-scope";
 
 export const MEAL_HISTORY_STORAGE_KEY = "seu-eat-history";
 export const FAVORITES_STORAGE_KEY = "seu-eat-favorites";
@@ -45,20 +46,22 @@ export function isFavoriteFood(favorites: FavoriteFood[], foodId: string) {
   return favorites.some((item) => item.foodId === foodId);
 }
 
-export function readMealHistory() {
-  return readJsonArray<MealHistoryItem>(MEAL_HISTORY_STORAGE_KEY);
+export function readMealHistory(scope?: string) {
+  const scoped = readJsonArray<MealHistoryItem>(scopedStorageKey(MEAL_HISTORY_STORAGE_KEY, scope));
+  return scoped.length ? scoped : readJsonArray<MealHistoryItem>(MEAL_HISTORY_STORAGE_KEY);
 }
 
-export function writeMealHistory(items: MealHistoryItem[]) {
+export function writeMealHistory(items: MealHistoryItem[], scope?: string) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(MEAL_HISTORY_STORAGE_KEY, JSON.stringify(items));
+  window.localStorage.setItem(scopedStorageKey(MEAL_HISTORY_STORAGE_KEY, scope), JSON.stringify(items));
 }
 
-export function readFavoriteFoods() {
-  return readJsonArray<FavoriteFood>(FAVORITES_STORAGE_KEY);
+export function readFavoriteFoods(scope?: string) {
+  const scoped = readJsonArray<FavoriteFood>(scopedStorageKey(FAVORITES_STORAGE_KEY, scope));
+  return scoped.length ? scoped : readJsonArray<FavoriteFood>(FAVORITES_STORAGE_KEY);
 }
 
-export function writeFavoriteFoods(items: FavoriteFood[]) {
+export function writeFavoriteFoods(items: FavoriteFood[], scope?: string) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(items));
+  window.localStorage.setItem(scopedStorageKey(FAVORITES_STORAGE_KEY, scope), JSON.stringify(items));
 }

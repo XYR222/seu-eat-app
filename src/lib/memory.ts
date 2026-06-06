@@ -1,4 +1,5 @@
 import type { UserMemory } from "@/types";
+import { scopedStorageKey } from "@/lib/storage-scope";
 
 export const MEMORY_STORAGE_KEY = "seu-eat-memory";
 
@@ -37,9 +38,10 @@ export function removeMemoryValue(memory: UserMemory, field: keyof UserMemory, v
   };
 }
 
-export function readMemory(): UserMemory {
+export function readMemory(scope?: string): UserMemory {
   if (typeof window === "undefined") return defaultMemory();
-  const raw = window.localStorage.getItem(MEMORY_STORAGE_KEY);
+  const key = scopedStorageKey(MEMORY_STORAGE_KEY, scope);
+  const raw = window.localStorage.getItem(key) ?? window.localStorage.getItem(MEMORY_STORAGE_KEY);
   if (!raw) return defaultMemory();
   try {
     return { ...defaultMemory(), ...JSON.parse(raw) };
@@ -48,7 +50,7 @@ export function readMemory(): UserMemory {
   }
 }
 
-export function writeMemory(memory: UserMemory) {
+export function writeMemory(memory: UserMemory, scope?: string) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(MEMORY_STORAGE_KEY, JSON.stringify(memory));
+  window.localStorage.setItem(scopedStorageKey(MEMORY_STORAGE_KEY, scope), JSON.stringify(memory));
 }

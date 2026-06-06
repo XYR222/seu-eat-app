@@ -1,4 +1,5 @@
 import type { Food, FoodFeedback, StallFeedback } from "@/types";
+import { scopedStorageKey } from "@/lib/storage-scope";
 
 export const FOOD_FEEDBACK_STORAGE_KEY = "seu-eat-feedback";
 export const STALL_FEEDBACK_STORAGE_KEY = "seu-eat-stall-feedback";
@@ -17,7 +18,7 @@ const mergeComments = (stored: string[] = [], initial: string[] = []) => Array.f
 
 export function mergeFoodFeedback(initial: FoodFeedback[], stored: FoodFeedback[] = []): FoodFeedback[] {
   const storedById = new Map(stored.map((item) => [item.foodId, item]));
-  return initial.map((item) => {
+  const merged = initial.map((item) => {
     const saved = storedById.get(item.foodId);
     if (!saved) return item;
     return {
@@ -28,6 +29,17 @@ export function mergeFoodFeedback(initial: FoodFeedback[], stored: FoodFeedback[
       comments: mergeComments(saved.comments, item.comments),
     };
   });
+  const initialIds = new Set(initial.map((item) => item.foodId));
+  const extras = stored
+    .filter((item) => !initialIds.has(item.foodId))
+    .map((item) => ({
+      foodId: item.foodId,
+      likes: item.likes ?? 0,
+      dislikes: item.dislikes ?? 0,
+      tagVotes: item.tagVotes ?? {},
+      comments: mergeComments(item.comments, []),
+    }));
+  return [...merged, ...extras];
 }
 
 export function createInitialStallFeedback(foods: FoodLike[]): StallFeedback[] {
@@ -80,20 +92,22 @@ function readJsonArray<T>(key: string): T[] {
   }
 }
 
-export function readStoredFoodFeedback() {
-  return readJsonArray<FoodFeedback>(FOOD_FEEDBACK_STORAGE_KEY);
+export function readStoredFoodFeedback(scope?: string) {
+  const scoped = readJsonArray<FoodFeedback>(scopedStorageKey(FOOD_FEEDBACK_STORAGE_KEY, scope));
+  return scoped.length ? scoped : readJsonArray<FoodFeedback>(FOOD_FEEDBACK_STORAGE_KEY);
 }
 
-export function readStoredStallFeedback() {
-  return readJsonArray<StallFeedback>(STALL_FEEDBACK_STORAGE_KEY);
+export function readStoredStallFeedback(scope?: string) {
+  const scoped = readJsonArray<StallFeedback>(scopedStorageKey(STALL_FEEDBACK_STORAGE_KEY, scope));
+  return scoped.length ? scoped : readJsonArray<StallFeedback>(STALL_FEEDBACK_STORAGE_KEY);
 }
 
-export function writeStoredFoodFeedback(feedback: FoodFeedback[]) {
+export function writeStoredFoodFeedback(feedback: FoodFeedback[], scope?: string) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(FOOD_FEEDBACK_STORAGE_KEY, JSON.stringify(feedback));
+  window.localStorage.setItem(scopedStorageKey(FOOD_FEEDBACK_STORAGE_KEY, scope), JSON.stringify(feedback));
 }
 
-export function writeStoredStallFeedback(feedback: StallFeedback[]) {
+export function writeStoredStallFeedback(feedback: StallFeedback[], scope?: string) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STALL_FEEDBACK_STORAGE_KEY, JSON.stringify(feedback));
+  window.localStorage.setItem(scopedStorageKey(STALL_FEEDBACK_STORAGE_KEY, scope), JSON.stringify(feedback));
 }

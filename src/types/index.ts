@@ -79,6 +79,17 @@ export type DrawCard = {
   reason: string;
 };
 
+export type CanteenActivity = {
+  id: string;
+  title: string;
+  canteen: string;
+  stall?: string;
+  type: "限时优惠" | "新菜上架" | "高峰提醒" | "窗口变动" | "活动套餐";
+  period: string;
+  summary: string;
+  tags: string[];
+};
+
 export type RecommendRequest = {
   query: string;
   memory: UserMemory;

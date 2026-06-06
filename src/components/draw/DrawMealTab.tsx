@@ -54,10 +54,10 @@ export function DrawMealTab({
     memory.avoidTags.length || memory.recentFoods.length
       ? [...memory.avoidTags.map((tag) => `避开${tag}`), ...memory.recentFoods.map((id) => `最近吃过${foodMap.get(id)?.name ?? id}`)].join("、")
       : "暂无忌口，先给你抽点稳的。";
-  const toneMap: Record<DrawCard["type"], { wrap: string; pill: "green" | "amber" | "dark"; label: string }> = {
-    safe: { wrap: "border-emerald-200 bg-emerald-50/70", pill: "green", label: "低踩雷" },
-    explore: { wrap: "border-orange-200 bg-orange-50/80", pill: "amber", label: "换窗口" },
-    surprise: { wrap: "border-yellow-200 bg-yellow-50/90", pill: "dark", label: "随机感" },
+  const toneMap: Record<DrawCard["type"], { wrap: string; pill: "green" | "amber" | "dark"; label: string; pipi: string }> = {
+    safe: { wrap: "border-[#b9dc00]/45 bg-[#dcff3e]/22", pill: "green", label: "低踩雷", pipi: "/pipi/pipi-draw-safe-accent.png" },
+    explore: { wrap: "border-[#dfb836]/36 bg-[#ffe270]/30", pill: "amber", label: "换窗口", pipi: "/pipi/pipi-draw-explore-accent.png" },
+    surprise: { wrap: "border-[#4c4c35]/16 bg-white/86", pill: "dark", label: "随机感", pipi: "/pipi/pipi-draw-surprise-accent.png" },
   };
   const selected = selectedFoodId ? foods.find((food) => food.id === selectedFoodId) ?? null : null;
   const submitFeedback = (foodId: string, type: "like" | "dislike" | "tag" | "comment", value?: string) => {
@@ -74,55 +74,59 @@ export function DrawMealTab({
 
   return (
     <div className="space-y-4 pb-3">
-      <header className="rounded-[1.7rem] border border-amber-100 bg-gradient-to-br from-white via-amber-50 to-orange-50 p-5 shadow-[0_18px_45px_rgba(120,73,20,0.12)]">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-black text-orange-700">不想纠结</p>
-            <h1 className="mt-1 text-[2rem] font-black leading-tight text-stone-950">抽一餐</h1>
+      <header className="dn-hero-card">
+        <div className="relative z-10 flex items-start justify-between gap-3">
+          <div className="max-w-[68%]">
+            <p className="dn-eyebrow text-orange-700">不想纠结</p>
+            <h1 className="dn-card-title mt-1">抽一餐</h1>
           </div>
           <MetricPill tone="amber">3 张卡</MetricPill>
         </div>
-        <p className="mt-3 text-sm leading-6 text-stone-600">从校园菜品库里抽出稳妥、探店和惊喜三个选择，仍然会参考你的忌口和最近吃过什么。</p>
+        <p className="dn-muted relative z-10 mt-3 max-w-[68%] text-sm leading-6">从校园菜品库里抽出稳妥、探店和惊喜三个选择，仍然会参考你的忌口和最近吃过什么。</p>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/pipi/pipi-draw-hero.png" alt="" className="dn-pipi-shadow absolute -bottom-1 right-1 h-32 w-32 object-contain object-bottom" />
       </header>
-      <section className="rounded-[1.45rem] border border-amber-200 bg-white/85 p-4 shadow-sm">
-        <p className="text-xs font-black text-amber-800">抽卡已避开</p>
-        <p className="mt-1 text-sm leading-6 text-amber-950">{avoidedText}</p>
-        <button className="mt-4 w-full rounded-2xl bg-stone-950 px-4 py-3.5 text-sm font-black text-white shadow-[0_14px_24px_rgba(41,37,30,0.24)] transition hover:bg-stone-800 active:scale-[0.99]" type="button" onClick={draw}>
+      <section className="dn-card p-4">
+        <p className="dn-eyebrow text-[#8a5b00]">抽卡已避开</p>
+        <p className="mt-1 text-sm leading-6 text-[#4c4c35]">{avoidedText}</p>
+        <button className="dn-primary-button mt-4 w-full px-4 py-3.5 text-sm font-black transition active:scale-[0.99]" type="button" onClick={draw}>
           {cards.length ? "再抽一轮" : "开始抽卡"}
         </button>
       </section>
       <section className="space-y-3">
         <SectionHeader title="今日三张卡" subtitle={drawCount ? `第 ${drawCount} 轮，随机但不乱来。` : "随机但不乱来，仍然基于本地菜品和反馈。"} />
         {cards.length === 0 ? (
-          <div className="rounded-[1.35rem] border border-dashed border-amber-300 bg-white/82 p-6 text-center text-sm leading-6 text-stone-500">点击抽卡后，会出现稳妥卡、探店卡和惊喜卡。</div>
+          <div className="dn-card border-dashed p-6 text-center text-sm leading-6 text-stone-500">点击抽卡后，会出现稳妥卡、探店卡和惊喜卡。</div>
         ) : (
           cards.map((card) => {
             const food = foodMap.get(card.foodId);
             if (!food) return null;
             const tone = toneMap[card.type];
             return (
-              <article key={card.type} className={`rounded-[1.45rem] border p-4 text-left shadow-[0_14px_32px_rgba(41,37,30,0.08)] transition active:scale-[0.99] ${tone.wrap}`} onClick={() => setSelectedFoodId(food.id)}>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-black text-stone-800">{card.title}</p>
-                  <MetricPill tone={tone.pill}>{tone.label}</MetricPill>
+              <article key={card.type} className={`relative overflow-hidden rounded-[1.45rem] border p-4 text-left shadow-[0_14px_32px_rgba(41,37,30,0.08)] transition active:scale-[0.99] ${tone.wrap}`} onClick={() => setSelectedFoodId(food.id)}>
+                <div className="relative z-10 flex items-start justify-between gap-3">
+                  <p className="text-sm font-black text-[#4c4c35]">{card.title}</p>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <MetricPill tone={tone.pill}>{tone.label}</MetricPill>
+                    <MetricPill tone="red">¥{food.price}</MetricPill>
+                  </div>
                 </div>
-                <div className="mt-2 flex items-start justify-between">
+                <div className="relative z-10 mt-2">
                   <div>
-                    <h3 className="text-xl font-black leading-tight text-stone-950">{food.name}</h3>
-                    <p className="mt-1 text-xs text-stone-500">
+                    <h3 className="line-clamp-2 text-2xl font-black leading-tight text-[#2a2a1a]">{food.name}</h3>
+                    <p className="dn-muted mt-1 text-xs">
                       {food.canteen} · {food.stall}
                     </p>
                   </div>
-                  <MetricPill tone="red">¥{food.price}</MetricPill>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="relative z-10 mt-4 flex flex-wrap gap-2">
                   {food.tags.slice(0, 4).map((tag) => (
                     <Chip key={tag}>{tag}</Chip>
                   ))}
                 </div>
-                <p className="mt-3 rounded-2xl bg-white/70 px-3 py-2 text-sm leading-6 text-stone-700">{card.reason}</p>
+                <p className="relative z-10 mt-4 rounded-[1.1rem] bg-white/72 px-3 py-2.5 text-sm leading-6 text-[#4c4c35]">{card.reason}</p>
                 <button
-                  className="mt-4 w-full rounded-2xl bg-emerald-700 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-800 active:scale-[0.99]"
+                  className="dn-primary-button relative z-10 mt-4 w-full py-2.5 text-sm font-black transition active:scale-[0.99]"
                   type="button"
                   onClick={(event) => {
                     event.stopPropagation();
@@ -132,6 +136,8 @@ export function DrawMealTab({
                 >
                   就它了
                 </button>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={tone.pipi} alt="" className="dn-pipi-shadow pointer-events-none absolute right-10 top-24 z-0 h-20 w-20 object-contain opacity-45" />
               </article>
             );
           })

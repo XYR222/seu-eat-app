@@ -25,4 +25,9 @@ describe("applyFoodDetailFeedback", () => {
     expect(result.feedback.find((item) => item.foodId === "food_001")?.comments[0]).toBe("今天番茄味很足");
     expect(result.memoryPatch).toEqual({});
   });
+  it("creates feedback when commenting on a food without existing feedback", () => {
+    const result = applyFoodDetailFeedback([], { type: "comment", foodId: "food_999", comment: "new comment" });
+
+    expect(result.feedback).toEqual([{ foodId: "food_999", likes: 0, dislikes: 0, tagVotes: {}, comments: ["new comment"] }]);
+  });
 });

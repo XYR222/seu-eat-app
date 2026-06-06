@@ -1,8 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8f5ee;
-  --foreground: #1f211d;
+  --background: #f9faf3;
+  --foreground: #2a2a1a;
+  --dn-primary: #dcff3e;
+  --dn-primary-deep: #b9dc00;
+  --dn-olive: #858839;
+  --dn-olive-dark: #4c4c35;
+  --dn-ink: #2a2a1a;
+  --dn-gold: #dfb836;
+  --dn-sun: #ffe270;
+  --dn-bg: #f9faf3;
+  --dn-bg-muted: #f4f4ea;
+  --dn-surface: #ffffff;
+  --dn-danger: #e44d5e;
+  --dn-line: rgba(76, 76, 53, 0.14);
+  --dn-primary-soft: rgba(220, 255, 62, 0.18);
+  --dn-shadow-card: 0 18px 40px rgba(68, 68, 40, 0.14);
+  --dn-shadow-soft: 0 10px 28px rgba(80, 82, 44, 0.10);
+  --dn-radius-page: 32px;
+  --dn-radius-card: 24px;
+  --dn-radius-list: 20px;
+  --dn-radius-control: 999px;
 }
 
 @theme inline {
@@ -13,7 +32,8 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Microsoft YaHei", Arial, Helvetica, sans-serif;
+  font-family: "PingFang SC", "Microsoft YaHei", Arial, Helvetica, sans-serif;
+  letter-spacing: 0;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -37,6 +57,130 @@ button:disabled {
 }
 
 ::selection {
-  background: #bbf7d0;
-  color: #14532d;
+  background: var(--dn-primary);
+  color: #273000;
+}
+
+.dn-app {
+  color: var(--dn-ink);
+  background:
+    radial-gradient(circle at 84% 8%, rgba(220, 255, 62, 0.58), transparent 34%),
+    radial-gradient(circle at 6% 34%, rgba(255, 226, 112, 0.32), transparent 28%),
+    linear-gradient(180deg, #fdfff4 0%, #f6f7ee 52%, #fff7ec 100%);
+}
+
+.dn-card {
+  border-radius: var(--dn-radius-card);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  box-shadow: var(--dn-shadow-soft);
+}
+
+.dn-hero-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 132px;
+  padding: 18px 18px 22px;
+  border-radius: var(--dn-radius-card);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(253, 255, 236, 0.88));
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  box-shadow: var(--dn-shadow-soft);
+}
+
+.dn-hero-card--lime {
+  background: linear-gradient(135deg, rgba(220, 255, 62, 0.88), rgba(255, 226, 112, 0.58) 54%, rgba(255, 255, 255, 0.84));
+}
+
+.dn-card-title {
+  color: var(--dn-ink);
+  font-size: 30px;
+  font-weight: 950;
+  line-height: 1.08;
+}
+
+.dn-eyebrow {
+  color: #5e6e00;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.dn-muted {
+  color: rgba(42, 42, 26, 0.62);
+}
+
+.dn-top-pill {
+  min-height: 38px;
+  border-radius: var(--dn-radius-control);
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--dn-olive-dark);
+  box-shadow: 0 10px 24px rgba(80, 82, 44, 0.12);
+  backdrop-filter: blur(14px);
+}
+
+.dn-top-pill--primary {
+  border-color: rgba(185, 220, 0, 0.48);
+  background: rgba(220, 255, 62, 0.88);
+  color: #526100;
+}
+
+.dn-top-pill--warm {
+  border-color: rgba(223, 184, 54, 0.46);
+  background: rgba(255, 226, 112, 0.72);
+  color: #8a5b00;
+}
+
+.dn-bottom-tabs {
+  max-width: 430px;
+  min-height: 68px;
+  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 -14px 28px rgba(80, 82, 44, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.dn-tab-active {
+  background: rgba(220, 255, 62, 0.36);
+  border-color: rgba(185, 220, 0, 0.62);
+  color: #526100;
+}
+
+.dn-control {
+  border-radius: var(--dn-radius-control);
+  border: 1px solid rgba(76, 76, 53, 0.14);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--dn-olive-dark);
+}
+
+.dn-primary-button {
+  border-radius: var(--dn-radius-control);
+  background: var(--dn-primary);
+  color: #283000;
+  border: 1px solid rgba(185, 220, 0, 0.64);
+  box-shadow: 0 12px 22px rgba(185, 220, 0, 0.24);
+}
+
+.dn-secondary-button {
+  border-radius: var(--dn-radius-control);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--dn-olive-dark);
+  border: 1px solid rgba(76, 76, 53, 0.14);
+}
+
+.dn-price {
+  min-height: 25px;
+  padding: 0 10px;
+  border-radius: var(--dn-radius-control);
+  color: var(--dn-danger);
+  background: rgba(228, 77, 94, 0.08);
+  border: 1px solid rgba(228, 77, 94, 0.18);
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.dn-pipi-shadow {
+  filter: drop-shadow(0 16px 20px rgba(76, 76, 53, 0.16));
 }

@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "__MACOSX/**",
+    "frontend/**",
+    "outputs/**",
+    "ui-handoff/**",
+    "真实店铺与菜品及其简要描述/**",
   ]),
 ]);
 

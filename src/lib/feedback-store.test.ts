@@ -32,6 +32,12 @@ describe("feedback-store", () => {
     expect(merged.find((item) => item.foodId === "food_002")?.comments).toEqual(["同窗口菜品评论"]);
   });
 
+  it("keeps stored feedback for foods missing from initial feedback", () => {
+    const stored: FoodFeedback[] = [{ foodId: "food_999", likes: 1, dislikes: 0, tagVotes: {}, comments: ["new food comment"] }];
+
+    expect(mergeFoodFeedback(baseFoodFeedback, stored).find((item) => item.foodId === "food_999")).toEqual(stored[0]);
+  });
+
   it("merges stored stall feedback by stable canteen and stall key", () => {
     const stallKey = buildStallKey("桃园食堂", "二楼盖浇饭窗口");
     const initial: StallFeedback[] = [{ stallKey, canteen: "桃园食堂", stall: "二楼盖浇饭窗口", likes: 1, dislikes: 0, comments: ["窗口老评论"] }];

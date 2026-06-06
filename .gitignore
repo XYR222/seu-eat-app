@@ -25,6 +25,17 @@
 *.pem
 .tmp/
 .superpowers/
+.tools/
+supabase/.temp/
+__MACOSX/
+assets/
+frontend/
+outputs/
+ui-handoff/
+las_manual.pdf
+更新的松鼠图/
+水果示意图/
+真实店铺与菜品及其简要描述/
 
 # debug
 npm-debug.log*
@@ -41,3 +52,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel

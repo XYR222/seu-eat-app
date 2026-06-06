@@ -1,0 +1,16 @@
+.git
+.next
+node_modules
+
+.env
+.env.*
+
+.tools
+.tmp
+.superpowers
+outputs
+frontend
+ui-handoff
+__MACOSX
+
+真实店铺与菜品及其简要描述

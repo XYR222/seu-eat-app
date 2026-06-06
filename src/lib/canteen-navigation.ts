@@ -12,6 +12,7 @@ export type StallSummary = {
   stall: string;
   foodCount: number;
   tags: string[];
+  image?: string;
 };
 
 function topTags<T extends Food>(foods: T[], limit = 3) {
@@ -53,6 +54,13 @@ export function getStallsForCanteen<T extends Food>(foods: T[], canteen: string)
     stall,
     foodCount: items.length,
     tags: topTags(items),
+  }));
+}
+
+export function withStallImages(stalls: StallSummary[], stallImages: Record<string, string>): StallSummary[] {
+  return stalls.map((stall) => ({
+    ...stall,
+    image: stallImages[`${stall.canteen}::${stall.stall}`],
   }));
 }
 

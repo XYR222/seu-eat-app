@@ -1,4 +1,5 @@
 import type { FoodFeedback } from "@/types";
+import { foodItems } from "@/data/foods";
 
 const comments = [
   "出餐速度挺快，饭点排队还能接受。",
@@ -9,7 +10,7 @@ const comments = [
   "适合赶课前快速解决一餐。",
 ];
 
-export const feedbackItems: FoodFeedback[] = Array.from({ length: 36 }, (_, index) => {
+export const feedbackItems: FoodFeedback[] = Array.from({ length: foodItems.length }, (_, index) => {
   const id = `food_${String(index + 1).padStart(3, "0")}`;
   const likes = 8 + ((index * 7) % 19);
   const dislikes = (index * 3) % 6;

@@ -55,37 +55,37 @@ export function MyRecordsSheet({
 
   return (
     <div className="fixed inset-0 z-30 flex items-end bg-stone-950/35 px-3 pb-3 backdrop-blur-[2px]" onClick={onClose}>
-      <div className="max-h-[86vh] w-full overflow-auto rounded-[1.7rem] bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-stone-200" />
+      <div className="mx-auto max-h-[86vh] w-full max-w-[430px] overflow-auto rounded-[1.8rem] border border-white/70 bg-[#f9faf3] p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#4c4c35]/16" />
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-black text-emerald-700">个人记录</p>
-            <h2 className="mt-1 text-2xl font-black text-stone-950">我的吃饭记录</h2>
-            <p className="mt-1 text-xs leading-5 text-stone-500">记录明确选择、收藏和偏好，不保存账号身份。</p>
+            <p className="dn-eyebrow">个人记录</p>
+            <h2 className="mt-1 text-2xl font-black text-[#2a2a1a]">我的吃饭记录</h2>
+            <p className="dn-muted mt-1 text-xs leading-5">记录明确选择、收藏和偏好，不保存账号身份。</p>
           </div>
-          <button className="flex h-9 w-9 items-center justify-center rounded-full bg-stone-100 text-lg font-black text-stone-500" onClick={onClose} type="button">
+          <button className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-black text-[#4c4c35] shadow-sm" onClick={onClose} type="button">
             ×
           </button>
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
-          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
-            <p className="text-xl font-black text-emerald-900">{history.length}</p>
-            <p className="mt-1 text-[11px] font-bold text-emerald-700">最近记录</p>
+          <div className="rounded-2xl border border-[#b9dc00]/40 bg-[#dcff3e]/24 p-3">
+            <p className="text-xl font-black text-[#526100]">{history.length}</p>
+            <p className="mt-1 text-[11px] font-bold text-[#526100]">最近记录</p>
           </div>
-          <div className="rounded-2xl border border-amber-100 bg-amber-50 p-3">
-            <p className="text-xl font-black text-amber-900">{favorites.length}</p>
-            <p className="mt-1 text-[11px] font-bold text-amber-700">收藏菜品</p>
+          <div className="rounded-2xl border border-[#dfb836]/32 bg-[#ffe270]/36 p-3">
+            <p className="text-xl font-black text-[#8a5b00]">{favorites.length}</p>
+            <p className="mt-1 text-[11px] font-bold text-[#8a5b00]">收藏菜品</p>
           </div>
-          <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
-            <p className="text-xl font-black text-stone-950">{memory.avoidFoods.length}</p>
-            <p className="mt-1 text-[11px] font-bold text-stone-600">不再推荐</p>
+          <div className="rounded-2xl border border-[#4c4c35]/14 bg-white/82 p-3">
+            <p className="text-xl font-black text-[#2a2a1a]">{memory.avoidFoods.length}</p>
+            <p className="mt-1 text-[11px] font-bold text-[#4c4c35]">不再推荐</p>
           </div>
         </div>
 
         <section className="mt-5 space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-black text-stone-950">最近吃过</h3>
+            <h3 className="text-base font-black text-[#2a2a1a]">最近吃过</h3>
             <MetricPill tone="green">最近 20 条</MetricPill>
           </div>
           {recentHistory.length ? (
@@ -93,53 +93,53 @@ export function MyRecordsSheet({
               const food = foodMap.get(item.foodId);
               if (!food) return null;
               return (
-                <button className="w-full rounded-[1.2rem] border border-stone-200 bg-white p-3 text-left shadow-sm transition active:scale-[0.99]" key={item.id} onClick={() => onOpenFood(food.id)} type="button">
+                <button className="dn-card w-full p-3 text-left transition active:scale-[0.99]" key={item.id} onClick={() => onOpenFood(food.id)} type="button">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-black text-stone-950">{food.name}</p>
-                      <p className="mt-1 text-xs text-stone-500">
+                      <p className="font-black text-[#2a2a1a]">{food.name}</p>
+                      <p className="dn-muted mt-1 text-xs">
                         {food.canteen} / {food.stall}
                       </p>
                     </div>
                     <MetricPill tone={item.action === "disliked" ? "red" : "neutral"}>{actionLabel[item.action]}</MetricPill>
                   </div>
-                  <p className="mt-2 text-xs font-bold text-stone-500">
+                  <p className="dn-muted mt-2 text-xs font-bold">
                     {sourceLabel[item.source]} · {formatRelativeTime(item.createdAt)}
                   </p>
                 </button>
               );
             })
           ) : (
-            <div className="rounded-[1.2rem] border border-dashed border-stone-300 bg-stone-50 p-4 text-sm leading-6 text-stone-500">点“就吃这个”或在菜品详情里“记为吃过”后，这里会出现记录。</div>
+            <div className="dn-card border-dashed p-4 text-sm leading-6 text-stone-500">点“就吃这个”或在菜品详情里“记为吃过”后，这里会出现记录。</div>
           )}
         </section>
 
         <section className="mt-5 space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-black text-stone-950">收藏菜品</h3>
+            <h3 className="text-base font-black text-[#2a2a1a]">收藏菜品</h3>
             <MetricPill tone="amber">{favorites.length} 个</MetricPill>
           </div>
           {favoriteFoods.length ? (
             favoriteFoods.map((food) => (
-              <div className="rounded-[1.2rem] border border-stone-200 bg-white p-3 shadow-sm" key={food.id}>
+              <div className="dn-card p-3" key={food.id}>
                 <button className="w-full text-left" onClick={() => onOpenFood(food.id)} type="button">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-black text-stone-950">{food.name}</p>
-                      <p className="mt-1 text-xs text-stone-500">
+                      <p className="font-black text-[#2a2a1a]">{food.name}</p>
+                      <p className="dn-muted mt-1 text-xs">
                         {food.canteen} / {food.stall}
                       </p>
                     </div>
                     <MetricPill tone="red">¥{food.price}</MetricPill>
                   </div>
                 </button>
-                <button className="mt-3 rounded-full border border-stone-200 px-3 py-1.5 text-xs font-black text-stone-600" onClick={() => onToggleFavorite(food.id)} type="button">
+                <button className="dn-secondary-button mt-3 px-3 py-1.5 text-xs font-black" onClick={() => onToggleFavorite(food.id)} type="button">
                   取消收藏
                 </button>
               </div>
             ))
           ) : (
-            <div className="rounded-[1.2rem] border border-dashed border-stone-300 bg-stone-50 p-4 text-sm leading-6 text-stone-500">打开菜品详情后可以收藏。</div>
+            <div className="dn-card border-dashed p-4 text-sm leading-6 text-stone-500">打开菜品详情后可以收藏。</div>
           )}
         </section>
 

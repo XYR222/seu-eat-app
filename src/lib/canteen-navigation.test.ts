@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { Food } from "@/types";
-import { getCanteenSummaries, getFoodsForStall, getStallsForCanteen } from "./canteen-navigation";
+import { getCanteenSummaries, getFoodsForStall, getStallsForCanteen, withStallImages } from "./canteen-navigation";
 
 const foods: Food[] = [
   {
@@ -70,5 +70,12 @@ describe("canteen navigation helpers", () => {
 
   test("extracts foods for one stall only", () => {
     expect(getFoodsForStall(foods, "North Canteen", "Rice Stall").map((food) => food.id)).toEqual(["a", "c"]);
+  });
+
+  test("attaches stall images by stable canteen and stall key", () => {
+    expect(withStallImages(getStallsForCanteen(foods, "North Canteen"), { "North Canteen::Rice Stall": "/stalls/rice.jpg" })).toMatchObject([
+      { stall: "Rice Stall", image: "/stalls/rice.jpg" },
+      { stall: "Noodle Stall", image: undefined },
+    ]);
   });
 });

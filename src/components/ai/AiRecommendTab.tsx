@@ -16,6 +16,13 @@ type FoodWithFeedback = Food & { feedback: FoodFeedback };
 
 const quickQueries = ["15元以内", "清淡", "不辣", "高蛋白", "离我近"];
 const followups = ["换一批", "再便宜点", "不要面食", "离我更近", "别太辣", "偏咸"];
+const demoPrompt = "15元以内，清淡，不要太咸，离教学楼近";
+const scenePrompts = [
+  { label: "赶时间", text: "赶时间，离教学楼近，出餐快" },
+  { label: "想吃饱", text: "15元以内，量大，米饭类，能吃饱" },
+  { label: "想清淡", text: "清淡，不要太咸，不辣，最好有热汤" },
+  { label: "别踩雷", text: "随便推荐，但避开差评多和太辣的" },
+];
 
 export function AiRecommendTab({
   foods,
@@ -46,7 +53,7 @@ export function AiRecommendTab({
   onToggleFavorite: (foodId: string) => void;
   onSharedFeedback: (event: Omit<FeedbackEventRequest, "deviceId">) => void;
 }) {
-  const [query, setQuery] = useState("15元以内，清淡，不要太咸，离教学楼近");
+  const [query, setQuery] = useState(demoPrompt);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(false);
   const [constraints, setConstraints] = useState<string[]>([]);
@@ -92,43 +99,62 @@ export function AiRecommendTab({
 
   return (
     <div className="space-y-4 pb-3">
-      <header className="rounded-[1.7rem] border border-white/80 bg-white/78 p-5 shadow-[0_18px_45px_rgba(41,37,30,0.10)] backdrop-blur">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-black text-emerald-700">东南今天吃点啥</p>
-            <h1 className="mt-1 text-[2rem] font-black leading-tight tracking-normal text-stone-950">AI 帮你选饭</h1>
+      <header className="dn-hero-card dn-hero-card--lime">
+        <div className="relative z-10 flex items-start justify-between gap-3">
+          <div className="max-w-[68%]">
+            <p className="dn-eyebrow">东南今天吃点啥</p>
+            <h1 className="dn-card-title mt-1">AI 帮你选饭</h1>
           </div>
           <MetricPill tone="green">午饭高峰</MetricPill>
         </div>
-        <p className="mt-3 text-sm leading-6 text-stone-600">说一句你现在想吃什么，我只从校园菜品库和同学反馈里给你 3 个靠谱选择。</p>
+        <p className="dn-muted relative z-10 mt-3 max-w-[68%] text-sm leading-6">说一句你现在想吃什么，我只从校园菜品库和同学反馈里给你 3 个靠谱选择。</p>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/pipi/pipi-ai-hero.png" alt="" className="dn-pipi-shadow absolute -bottom-1 right-1 h-32 w-32 object-contain object-bottom" />
       </header>
-      <section className="rounded-[1.55rem] border border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-amber-50 p-4 shadow-[0_16px_40px_rgba(20,83,45,0.10)]">
+      <section className="dn-card p-4">
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <p className="text-xs font-black text-emerald-700">我想吃</p>
-            <p className="mt-1 text-xs text-stone-500">预算、口味、距离都可以直接写。</p>
+            <p className="dn-eyebrow">我想吃</p>
+            <p className="dn-muted mt-1 text-xs">例如：15元以内，清淡，不想排队。</p>
           </div>
           <MetricPill tone="dark">RAG + Memory</MetricPill>
         </div>
         <textarea
-          className="min-h-28 w-full resize-none rounded-2xl border border-emerald-100 bg-white/95 p-4 text-[15px] leading-7 text-stone-800 shadow-sm outline-none transition placeholder:text-stone-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+          className="min-h-28 w-full resize-none rounded-[1.25rem] border border-[#4c4c35]/14 bg-white/95 p-4 text-[15px] font-semibold leading-7 text-[#2a2a1a] shadow-sm outline-none transition placeholder:text-stone-400 focus:border-[#b9dc00] focus:ring-4 focus:ring-[#dcff3e]/30"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
+          placeholder="今天想吃什么？比如：15元以内，清淡，不想排队"
         />
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {scenePrompts.map((item) => (
+            <button className="rounded-full border border-[#4c4c35]/14 bg-white/82 px-3 py-2 text-xs font-black text-[#4c4c35] transition active:scale-[0.98]" key={item.label} onClick={() => setQuery(item.text)} type="button">
+              {item.label}
+            </button>
+          ))}
+        </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {quickQueries.map((item) => (
             <Chip key={item} tone="green" onClick={() => setQuery((current) => `${current}，${item}`)}>
               {item}
             </Chip>
           ))}
+          <Chip
+            tone="amber"
+            onClick={() => {
+              setQuery(demoPrompt);
+              void recommend(demoPrompt);
+            }}
+          >
+            演示一下
+          </Chip>
         </div>
-        <button className="mt-4 w-full rounded-2xl bg-emerald-700 px-4 py-3.5 text-sm font-black text-white shadow-[0_12px_24px_rgba(4,120,87,0.25)] transition hover:bg-emerald-800 active:scale-[0.99] disabled:bg-emerald-400" type="button" onClick={() => recommend()} disabled={loading}>
+        <button className="dn-primary-button mt-4 w-full px-4 py-3.5 text-sm font-black transition active:scale-[0.99] disabled:opacity-60" type="button" onClick={() => recommend()} disabled={loading}>
           {loading ? "正在检索菜单和同学反馈..." : "生成 3 个选择"}
         </button>
       </section>
       <MemorySummary memory={memory} onRemove={onMemoryRemove} onClear={onMemoryClear} />
       {constraints.length > 0 && (
-        <div className="rounded-2xl border border-stone-200 bg-white/82 px-3 py-2 text-xs font-bold text-stone-600 shadow-sm">
+        <div className="dn-card px-3 py-2 text-xs font-bold text-[#4c4c35]">
           当前条件：{constraints.join("、")}
         </div>
       )}
@@ -142,7 +168,7 @@ export function AiRecommendTab({
       <section className="space-y-3">
         <SectionHeader title="推荐结果" subtitle="每张卡都包含理由、风险和证据，方便现场解释 AI 不是乱猜。" />
         {recommendations.length === 0 ? (
-          <div className="rounded-[1.35rem] border border-dashed border-stone-300 bg-white/80 p-6 text-center text-sm leading-6 text-stone-500">输入需求后，我会只从现有菜品库里推荐 3 个具体选择，并展示同学反馈证据。</div>
+          <div className="dn-card border-dashed p-6 text-center text-sm leading-6 text-stone-500">输入需求后，我会只从现有菜品库里推荐 3 个具体选择，并展示同学反馈证据。</div>
         ) : (
           recommendations.map((recommendation, index) => (
             <RecommendationCard
