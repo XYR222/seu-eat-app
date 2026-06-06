@@ -6,7 +6,8 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { getCanteenSummaries, getFoodsForStall, getStallsForCanteen } from "@/lib/canteen-navigation";
 import { buildStallKey } from "@/lib/feedback-store";
 import { applyFoodDetailFeedback, applyStallDetailFeedback } from "@/lib/food-detail";
-import type { Food, FoodFeedback, StallFeedback, UserMemory } from "@/types";
+import { isFavoriteFood } from "@/lib/my-store";
+import type { FavoriteFood, Food, FoodFeedback, StallFeedback, UserMemory } from "@/types";
 import { useState } from "react";
 
 type FoodWithFeedback = Food & { feedback: FoodFeedback };
@@ -43,6 +44,9 @@ export function ExploreTab({
   setFeedback,
   setStallFeedback,
   onMemoryPatch,
+  favorites,
+  onToggleFavorite,
+  onMealSelected,
 }: {
   foods: FoodWithFeedback[];
   feedback: FoodFeedback[];
@@ -50,6 +54,9 @@ export function ExploreTab({
   setFeedback: (items: FoodFeedback[]) => void;
   setStallFeedback: (items: StallFeedback[]) => void;
   onMemoryPatch: (patch: Partial<UserMemory>) => void;
+  favorites: FavoriteFood[];
+  onToggleFavorite: (foodId: string) => void;
+  onMealSelected: (foodId: string) => void;
 }) {
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState("");
@@ -219,7 +226,20 @@ export function ExploreTab({
         ))}
       </section>
 
-      {selected && <FoodDetailSheet food={selected} onClose={() => setSelectedFoodId(null)} onFeedback={submitFeedback} onOpenStall={() => setSelectedStallKey(buildStallKey(selected.canteen, selected.stall))} />}
+      {selected && (
+        <FoodDetailSheet
+          food={selected}
+          favorite={isFavoriteFood(favorites, selected.id)}
+          onClose={() => setSelectedFoodId(null)}
+          onFeedback={submitFeedback}
+          onOpenStall={() => setSelectedStallKey(buildStallKey(selected.canteen, selected.stall))}
+          onToggleFavorite={onToggleFavorite}
+          onMarkAte={(foodId) => {
+            onMemoryPatch({ recentFoods: [foodId] });
+            onMealSelected(foodId);
+          }}
+        />
+      )}
       {selectedStall && <StallDetailSheet stall={selectedStall} foods={foods} foodFeedback={feedback} onClose={() => setSelectedStallKey(null)} onFeedback={submitStallFeedback} />}
     </div>
   );

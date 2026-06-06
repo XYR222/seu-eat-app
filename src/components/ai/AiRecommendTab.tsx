@@ -7,7 +7,8 @@ import { MetricPill } from "@/components/ui/MetricPill";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { buildStallKey } from "@/lib/feedback-store";
 import { applyFoodDetailFeedback, applyStallDetailFeedback } from "@/lib/food-detail";
-import type { Food, FoodFeedback, Recommendation, StallFeedback, UserMemory } from "@/types";
+import { isFavoriteFood } from "@/lib/my-store";
+import type { FavoriteFood, Food, FoodFeedback, Recommendation, StallFeedback, UserMemory } from "@/types";
 import { useState } from "react";
 
 type FoodWithFeedback = Food & { feedback: FoodFeedback };
@@ -25,6 +26,9 @@ export function AiRecommendTab({
   onMemoryPatch,
   onMemoryRemove,
   onMemoryClear,
+  onMealSelected,
+  favorites,
+  onToggleFavorite,
 }: {
   foods: FoodWithFeedback[];
   feedback: FoodFeedback[];
@@ -35,6 +39,9 @@ export function AiRecommendTab({
   onMemoryPatch: (patch: Partial<UserMemory>) => void;
   onMemoryRemove: (field: keyof UserMemory, value: string) => void;
   onMemoryClear: () => void;
+  onMealSelected: (foodId: string) => void;
+  favorites: FavoriteFood[];
+  onToggleFavorite: (foodId: string) => void;
 }) {
   const [query, setQuery] = useState("15元以内，清淡，不要太咸，离教学楼近");
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -138,7 +145,10 @@ export function AiRecommendTab({
               rank={index + 1}
               recommendation={recommendation}
               foods={foods}
-              onAte={(foodId) => onMemoryPatch({ recentFoods: [foodId] })}
+              onAte={(foodId) => {
+                onMemoryPatch({ recentFoods: [foodId] });
+                onMealSelected(foodId);
+              }}
               onAvoid={(foodId) => onMemoryPatch({ avoidFoods: [foodId] })}
               onPatch={onMemoryPatch}
               onOpenDetail={setSelectedFoodId}
@@ -146,7 +156,20 @@ export function AiRecommendTab({
           ))
         )}
       </section>
-      {selected && <FoodDetailSheet food={selected} onClose={() => setSelectedFoodId(null)} onFeedback={submitFeedback} onOpenStall={() => setSelectedStallKey(buildStallKey(selected.canteen, selected.stall))} />}
+      {selected && (
+        <FoodDetailSheet
+          food={selected}
+          favorite={isFavoriteFood(favorites, selected.id)}
+          onClose={() => setSelectedFoodId(null)}
+          onFeedback={submitFeedback}
+          onOpenStall={() => setSelectedStallKey(buildStallKey(selected.canteen, selected.stall))}
+          onToggleFavorite={onToggleFavorite}
+          onMarkAte={(foodId) => {
+            onMemoryPatch({ recentFoods: [foodId] });
+            onMealSelected(foodId);
+          }}
+        />
+      )}
       {selectedStall && <StallDetailSheet stall={selectedStall} foods={foods} foodFeedback={feedback} onClose={() => setSelectedStallKey(null)} onFeedback={submitStallFeedback} />}
     </div>
   );

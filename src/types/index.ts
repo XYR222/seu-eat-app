@@ -42,6 +42,19 @@ export type UserMemory = {
   updatedAt: string;
 };
 
+export type MealHistoryItem = {
+  id: string;
+  foodId: string;
+  action: "ate" | "selected" | "disliked";
+  source: "ai" | "draw" | "explore";
+  createdAt: string;
+};
+
+export type FavoriteFood = {
+  foodId: string;
+  createdAt: string;
+};
+
 export type Recommendation = {
   foodId: string;
   score: number;

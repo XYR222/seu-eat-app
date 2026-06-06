@@ -7,7 +7,8 @@ import { foodItems } from "@/data/foods";
 import { drawMealCards } from "@/lib/draw";
 import { buildStallKey } from "@/lib/feedback-store";
 import { applyFoodDetailFeedback, applyStallDetailFeedback } from "@/lib/food-detail";
-import type { DrawCard, Food, FoodFeedback, StallFeedback, UserMemory } from "@/types";
+import { isFavoriteFood } from "@/lib/my-store";
+import type { DrawCard, FavoriteFood, Food, FoodFeedback, StallFeedback, UserMemory } from "@/types";
 import { useState } from "react";
 
 type FoodWithFeedback = Food & { feedback: FoodFeedback };
@@ -20,6 +21,9 @@ export function DrawMealTab({
   setStallFeedback,
   memory,
   onMemoryPatch,
+  onMealSelected,
+  favorites,
+  onToggleFavorite,
 }: {
   foods: FoodWithFeedback[];
   feedback: FoodFeedback[];
@@ -28,6 +32,9 @@ export function DrawMealTab({
   setStallFeedback: (items: StallFeedback[]) => void;
   memory: UserMemory;
   onMemoryPatch: (patch: Partial<UserMemory>) => void;
+  onMealSelected: (foodId: string) => void;
+  favorites: FavoriteFood[];
+  onToggleFavorite: (foodId: string) => void;
 }) {
   const [cards, setCards] = useState<DrawCard[]>([]);
   const [drawCount, setDrawCount] = useState(0);
@@ -115,6 +122,7 @@ export function DrawMealTab({
                   onClick={(event) => {
                     event.stopPropagation();
                     onMemoryPatch({ recentFoods: [food.id] });
+                    onMealSelected(food.id);
                   }}
                 >
                   就它了
@@ -124,7 +132,20 @@ export function DrawMealTab({
           })
         )}
       </section>
-      {selected && <FoodDetailSheet food={selected} onClose={() => setSelectedFoodId(null)} onFeedback={submitFeedback} onOpenStall={() => setSelectedStallKey(buildStallKey(selected.canteen, selected.stall))} />}
+      {selected && (
+        <FoodDetailSheet
+          food={selected}
+          favorite={isFavoriteFood(favorites, selected.id)}
+          onClose={() => setSelectedFoodId(null)}
+          onFeedback={submitFeedback}
+          onOpenStall={() => setSelectedStallKey(buildStallKey(selected.canteen, selected.stall))}
+          onToggleFavorite={onToggleFavorite}
+          onMarkAte={(foodId) => {
+            onMemoryPatch({ recentFoods: [foodId] });
+            onMealSelected(foodId);
+          }}
+        />
+      )}
       {selectedStall && <StallDetailSheet stall={selectedStall} foods={foods} foodFeedback={feedback} onClose={() => setSelectedStallKey(null)} onFeedback={submitStallFeedback} />}
     </div>
   );
