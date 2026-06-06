@@ -8,12 +8,32 @@ const allowed = (food: Food, memory: UserMemory) =>
   !memory.recentFoods?.includes(food.id) &&
   !food.tags.some((tag) => memory.avoidTags?.includes(tag));
 
-export function drawMealCards(foods: Food[], feedback: FoodFeedback[], memory: UserMemory): DrawCard[] {
+export type DrawMealOptions = {
+  random?: () => number;
+  previousFoodIds?: string[];
+};
+
+function rotateByRandom(items: Food[], random: () => number): Food[] {
+  if (items.length <= 1) return items;
+  const offset = Math.floor(random() * items.length) % items.length;
+  return [...items.slice(offset), ...items.slice(0, offset)];
+}
+
+export function drawMealCards(foods: Food[], feedback: FoodFeedback[], memory: UserMemory, options: DrawMealOptions = {}): DrawCard[] {
+  const random = options.random ?? Math.random;
+  const previousFoodIds = new Set(options.previousFoodIds ?? []);
   const feedbackByFood = new Map(feedback.map((item) => [item.foodId, item]));
   const pool = foods.filter((food) => allowed(food, memory));
   const used = new Set<string>();
   const pick = (items: Food[], fallback: Food[]) => {
-    const source = items.find((food) => !used.has(food.id)) ?? fallback.find((food) => !used.has(food.id)) ?? foods[0];
+    const freshItems = rotateByRandom(items, random).filter((food) => !previousFoodIds.has(food.id));
+    const freshFallback = rotateByRandom(fallback, random).filter((food) => !previousFoodIds.has(food.id));
+    const source =
+      freshItems.find((food) => !used.has(food.id)) ??
+      freshFallback.find((food) => !used.has(food.id)) ??
+      rotateByRandom(items, random).find((food) => !used.has(food.id)) ??
+      rotateByRandom(fallback, random).find((food) => !used.has(food.id)) ??
+      foods[0];
     used.add(source.id);
     return source;
   };

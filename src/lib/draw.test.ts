@@ -29,4 +29,22 @@ describe("drawMealCards", () => {
       expect(card.foodId).not.toBe("food_004");
     }
   });
+
+  it("can produce a different draw on repeated clicks when random source changes", () => {
+    const memory: UserMemory = {
+      budgetMax: 18,
+      preferTags: ["清淡"],
+      avoidTags: ["偏辣"],
+      recentFoods: [],
+      avoidFoods: [],
+      preferredCanteens: [],
+      sessionContext: [],
+      updatedAt: "2026-06-06T00:00:00.000Z",
+    };
+
+    const first = drawMealCards(foodItems, feedbackItems, memory, { random: () => 0.1 });
+    const second = drawMealCards(foodItems, feedbackItems, memory, { random: () => 0.9, previousFoodIds: first.map((card) => card.foodId) });
+
+    expect(second.map((card) => card.foodId)).not.toEqual(first.map((card) => card.foodId));
+  });
 });

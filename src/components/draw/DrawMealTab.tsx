@@ -20,7 +20,13 @@ export function DrawMealTab({
   onMemoryPatch: (patch: Partial<UserMemory>) => void;
 }) {
   const [cards, setCards] = useState<DrawCard[]>([]);
-  const draw = () => setCards(drawMealCards(foodItems, feedback, memory));
+  const [drawCount, setDrawCount] = useState(0);
+  const draw = () =>
+    setCards((current) => {
+      const next = drawMealCards(foodItems, feedback, memory, { previousFoodIds: current.map((card) => card.foodId) });
+      setDrawCount((count) => count + 1);
+      return next;
+    });
   const foodMap = new Map(foods.map((food) => [food.id, food]));
   const avoidedText =
     memory.avoidTags.length || memory.recentFoods.length
@@ -48,11 +54,11 @@ export function DrawMealTab({
         <p className="text-xs font-black text-amber-800">抽卡已避开</p>
         <p className="mt-1 text-sm leading-6 text-amber-950">{avoidedText}</p>
         <button className="mt-4 w-full rounded-2xl bg-stone-950 px-4 py-3.5 text-sm font-black text-white shadow-[0_14px_24px_rgba(41,37,30,0.24)] transition hover:bg-stone-800 active:scale-[0.99]" type="button" onClick={draw}>
-          开始抽卡
+          {cards.length ? "再抽一轮" : "开始抽卡"}
         </button>
       </section>
       <section className="space-y-3">
-        <SectionHeader title="今日三张卡" subtitle="随机但不乱来，仍然基于本地菜品和反馈。" />
+        <SectionHeader title="今日三张卡" subtitle={drawCount ? `第 ${drawCount} 轮，随机但不乱来。` : "随机但不乱来，仍然基于本地菜品和反馈。"} />
         {cards.length === 0 ? (
           <div className="rounded-[1.35rem] border border-dashed border-amber-300 bg-white/82 p-6 text-center text-sm leading-6 text-stone-500">点击抽卡后，会出现稳妥卡、探店卡和惊喜卡。</div>
         ) : (
