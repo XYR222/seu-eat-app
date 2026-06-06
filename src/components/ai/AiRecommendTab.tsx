@@ -3,7 +3,7 @@ import { RecommendationCard } from "@/components/ai/RecommendationCard";
 import { Chip } from "@/components/ui/Chip";
 import { MetricPill } from "@/components/ui/MetricPill";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import type { Food, FoodFeedback, Recommendation, UserMemory } from "@/types";
+import type { Food, FoodFeedback, Recommendation, StallFeedback, UserMemory } from "@/types";
 import { useState } from "react";
 
 type FoodWithFeedback = Food & { feedback: FoodFeedback };
@@ -13,12 +13,16 @@ const followups = ["换一批", "再便宜点", "不要面食", "离我更近", 
 
 export function AiRecommendTab({
   foods,
+  feedback,
+  stallFeedback,
   memory,
   onMemoryPatch,
   onMemoryRemove,
   onMemoryClear,
 }: {
   foods: FoodWithFeedback[];
+  feedback: FoodFeedback[];
+  stallFeedback: StallFeedback[];
   memory: UserMemory;
   onMemoryPatch: (patch: Partial<UserMemory>) => void;
   onMemoryRemove: (field: keyof UserMemory, value: string) => void;
@@ -38,6 +42,8 @@ export function AiRecommendTab({
         body: JSON.stringify({
           query: nextQuery,
           memory,
+          feedback,
+          stallFeedback,
           session: { previousRecommendations: recommendations.map((item) => item.foodId), currentConstraints: constraints },
         }),
       });

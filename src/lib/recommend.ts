@@ -3,7 +3,7 @@ import { foodItems } from "@/data/foods";
 import { rerankWithDeepSeek } from "@/lib/deepseek";
 import { extractMemoryPatch, mockRerank } from "@/lib/mock-ai";
 import { retrieveCandidates } from "@/lib/rag";
-import type { Candidate, Recommendation, RecommendRequest, RecommendResponse } from "@/types";
+import type { Candidate, FoodFeedback, Recommendation, RecommendRequest, RecommendResponse } from "@/types";
 
 const fallbackReason = "它是当前候选里综合反馈比较稳的一项。";
 
@@ -14,6 +14,28 @@ function normalizeEvidence(evidence: unknown, candidate: Candidate): string[] {
   }
   if (typeof evidence === "string" && evidence.trim()) return [evidence.trim()];
   return candidate.evidence.length > 0 ? candidate.evidence : [`${candidate.food.canteen} ${candidate.food.stall}`, `价格${candidate.food.price}元`];
+}
+
+function uniqueComments(...groups: Array<string[] | undefined>) {
+  return Array.from(new Set(groups.flatMap((items) => items ?? []).map((item) => item.trim()).filter(Boolean))).slice(0, 12);
+}
+
+export function mergeRequestFoodFeedback(staticFeedback: FoodFeedback[], requestFeedback: FoodFeedback[] = []): FoodFeedback[] {
+  const staticById = new Map(staticFeedback.map((item) => [item.foodId, item]));
+  const requestById = new Map(requestFeedback.map((item) => [item.foodId, item]));
+  const foodIds = Array.from(new Set([...staticById.keys(), ...requestById.keys()]));
+
+  return foodIds.map((foodId) => {
+    const base = staticById.get(foodId);
+    const incoming = requestById.get(foodId);
+    return {
+      foodId,
+      likes: incoming?.likes ?? base?.likes ?? 0,
+      dislikes: incoming?.dislikes ?? base?.dislikes ?? 0,
+      tagVotes: { ...(base?.tagVotes ?? {}), ...(incoming?.tagVotes ?? {}) },
+      comments: uniqueComments(incoming?.comments, base?.comments),
+    };
+  });
 }
 
 export function sanitizeRecommendations(recommendations: Recommendation[], candidates: Candidate[]): Recommendation[] {
@@ -36,10 +58,12 @@ export function sanitizeRecommendations(recommendations: Recommendation[], candi
 }
 
 export async function recommendMeals(request: RecommendRequest): Promise<RecommendResponse> {
+  const mergedFeedback = mergeRequestFoodFeedback(feedbackItems, request.feedback);
   const candidates = retrieveCandidates({
     query: request.query,
     foods: foodItems,
-    feedback: feedbackItems,
+    feedback: mergedFeedback,
+    stallFeedback: request.stallFeedback,
     memory: request.memory,
     limit: 8,
   });

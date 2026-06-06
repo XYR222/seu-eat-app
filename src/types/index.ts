@@ -69,6 +69,8 @@ export type DrawCard = {
 export type RecommendRequest = {
   query: string;
   memory: UserMemory;
+  feedback?: FoodFeedback[];
+  stallFeedback?: StallFeedback[];
   session: {
     previousRecommendations: string[];
     currentConstraints: string[];

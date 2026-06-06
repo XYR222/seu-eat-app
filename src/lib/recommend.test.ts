@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { sanitizeRecommendations } from "@/lib/recommend";
-import type { Candidate, Recommendation } from "@/types";
+import { mergeRequestFoodFeedback, sanitizeRecommendations } from "@/lib/recommend";
+import { retrieveCandidates } from "@/lib/rag";
+import type { Candidate, Food, FoodFeedback, Recommendation, StallFeedback, UserMemory } from "@/types";
 
 const candidate = {
   food: {
@@ -50,5 +51,71 @@ describe("sanitizeRecommendations", () => {
     const sanitized = sanitizeRecommendations([{ foodId: "invented", score: 100, reason: "bad", risk: "bad", evidence: ["bad"] }], [candidate]);
 
     expect(sanitized).toEqual([]);
+  });
+});
+
+const memory: UserMemory = {
+  preferTags: [],
+  avoidTags: [],
+  recentFoods: [],
+  avoidFoods: [],
+  preferredCanteens: [],
+  sessionContext: [],
+  updatedAt: "2026-06-06T00:00:00.000Z",
+};
+
+const foods = [
+  {
+    id: "food_a",
+    name: "A Rice",
+    canteen: "North Canteen",
+    stall: "Rice Stall",
+    price: 12,
+    location: "North 1F",
+    distanceLevel: "near",
+    tags: ["rice"],
+    taste: "light",
+    description: "A",
+  },
+  {
+    id: "food_b",
+    name: "B Noodle",
+    canteen: "North Canteen",
+    stall: "Noodle Stall",
+    price: 12,
+    location: "North 1F",
+    distanceLevel: "near",
+    tags: ["noodle"],
+    taste: "light",
+    description: "B",
+  },
+] satisfies Food[];
+
+describe("request feedback RAG loop", () => {
+  it("merges request food feedback over static feedback", () => {
+    const staticFeedback: FoodFeedback[] = [{ foodId: "food_a", likes: 1, dislikes: 0, tagVotes: { old: 1 }, comments: ["old comment"] }];
+    const requestFeedback: FoodFeedback[] = [{ foodId: "food_a", likes: 30, dislikes: 2, tagVotes: { fresh: 4 }, comments: ["fresh comment"] }];
+
+    expect(mergeRequestFoodFeedback(staticFeedback, requestFeedback)).toEqual([{ foodId: "food_a", likes: 30, dislikes: 2, tagVotes: { old: 1, fresh: 4 }, comments: ["fresh comment", "old comment"] }]);
+  });
+
+  it("uses request food comments as candidate evidence", () => {
+    const requestFeedback: FoodFeedback[] = [{ foodId: "food_a", likes: 40, dislikes: 0, tagVotes: {}, comments: ["fresh campus review"] }];
+
+    const [candidate] = retrieveCandidates({ query: "Rice", foods, feedback: requestFeedback, memory, limit: 1 });
+
+    expect(candidate.food.id).toBe("food_a");
+    expect(candidate.ragText).toContain("fresh campus review");
+    expect(candidate.evidence).toContain("短评：fresh campus review");
+  });
+
+  it("uses request stall feedback as candidate evidence and score signal", () => {
+    const stallFeedback: StallFeedback[] = [{ stallKey: "North Canteen::Rice Stall", canteen: "North Canteen", stall: "Rice Stall", likes: 50, dislikes: 0, comments: ["stall is reliable"] }];
+
+    const [candidate] = retrieveCandidates({ query: "meal", foods, feedback: [], stallFeedback, memory, limit: 1 });
+
+    expect(candidate.food.id).toBe("food_a");
+    expect(candidate.ragText).toContain("stall is reliable");
+    expect(candidate.evidence).toContain("窗口口碑：stall is reliable");
   });
 });
