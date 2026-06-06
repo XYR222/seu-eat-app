@@ -72,7 +72,7 @@ export function AppShell() {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff7ed_0,#f8f5ee_34%,#eff7ee_100%)] text-stone-900">
       <div className="mx-auto min-h-screen max-w-md px-4 pb-28 pt-5">
-        {tab === "ai" && <AiRecommendTab foods={foods} feedback={feedback} stallFeedback={stallFeedback} memory={memory} onMemoryPatch={updateMemory} onMemoryRemove={removeMemory} onMemoryClear={clearMemory} />}
+        {tab === "ai" && <AiRecommendTab foods={foods} feedback={feedback} stallFeedback={stallFeedback} setFeedback={updateFeedback} setStallFeedback={updateStallFeedback} memory={memory} onMemoryPatch={updateMemory} onMemoryRemove={removeMemory} onMemoryClear={clearMemory} />}
         {tab === "explore" && <ExploreTab foods={foods} feedback={feedback} stallFeedback={stallFeedback} setFeedback={updateFeedback} setStallFeedback={updateStallFeedback} onMemoryPatch={updateMemory} />}
         {tab === "draw" && <DrawMealTab foods={foods} feedback={feedback} stallFeedback={stallFeedback} setFeedback={updateFeedback} setStallFeedback={updateStallFeedback} memory={memory} onMemoryPatch={updateMemory} />}
       </div>

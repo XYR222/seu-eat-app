@@ -1,8 +1,12 @@
 import { MemorySummary } from "@/components/ai/MemorySummary";
 import { RecommendationCard } from "@/components/ai/RecommendationCard";
+import { FoodDetailSheet } from "@/components/food/FoodDetailSheet";
+import { StallDetailSheet } from "@/components/food/StallDetailSheet";
 import { Chip } from "@/components/ui/Chip";
 import { MetricPill } from "@/components/ui/MetricPill";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { buildStallKey } from "@/lib/feedback-store";
+import { applyFoodDetailFeedback, applyStallDetailFeedback } from "@/lib/food-detail";
 import type { Food, FoodFeedback, Recommendation, StallFeedback, UserMemory } from "@/types";
 import { useState } from "react";
 
@@ -15,6 +19,8 @@ export function AiRecommendTab({
   foods,
   feedback,
   stallFeedback,
+  setFeedback,
+  setStallFeedback,
   memory,
   onMemoryPatch,
   onMemoryRemove,
@@ -23,6 +29,8 @@ export function AiRecommendTab({
   foods: FoodWithFeedback[];
   feedback: FoodFeedback[];
   stallFeedback: StallFeedback[];
+  setFeedback: (items: FoodFeedback[]) => void;
+  setStallFeedback: (items: StallFeedback[]) => void;
   memory: UserMemory;
   onMemoryPatch: (patch: Partial<UserMemory>) => void;
   onMemoryRemove: (field: keyof UserMemory, value: string) => void;
@@ -32,6 +40,10 @@ export function AiRecommendTab({
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(false);
   const [constraints, setConstraints] = useState<string[]>([]);
+  const [selectedFoodId, setSelectedFoodId] = useState<string | null>(null);
+  const [selectedStallKey, setSelectedStallKey] = useState<string | null>(null);
+  const selected = selectedFoodId ? foods.find((food) => food.id === selectedFoodId) ?? null : null;
+  const selectedStall = selectedStallKey ? stallFeedback.find((item) => item.stallKey === selectedStallKey) : undefined;
 
   const recommend = async (nextQuery = query) => {
     setLoading(true);
@@ -54,6 +66,16 @@ export function AiRecommendTab({
     } finally {
       setLoading(false);
     }
+  };
+
+  const submitFeedback = (foodId: string, type: "like" | "dislike" | "tag" | "comment", value?: string) => {
+    const result = applyFoodDetailFeedback(feedback, type === "tag" ? { type, foodId, tag: value ?? "出餐快" } : type === "comment" ? { type, foodId, comment: value ?? "" } : { type, foodId });
+    setFeedback(result.feedback);
+    onMemoryPatch(result.memoryPatch);
+  };
+
+  const submitStallFeedback = (stallKey: string, type: "like" | "dislike" | "comment", comment?: string) => {
+    setStallFeedback(applyStallDetailFeedback(stallFeedback, type === "comment" ? { type, stallKey, comment: comment ?? "" } : { type, stallKey }));
   };
 
   return (
@@ -119,10 +141,13 @@ export function AiRecommendTab({
               onAte={(foodId) => onMemoryPatch({ recentFoods: [foodId] })}
               onAvoid={(foodId) => onMemoryPatch({ avoidFoods: [foodId] })}
               onPatch={onMemoryPatch}
+              onOpenDetail={setSelectedFoodId}
             />
           ))
         )}
       </section>
+      {selected && <FoodDetailSheet food={selected} onClose={() => setSelectedFoodId(null)} onFeedback={submitFeedback} onOpenStall={() => setSelectedStallKey(buildStallKey(selected.canteen, selected.stall))} />}
+      {selectedStall && <StallDetailSheet stall={selectedStall} foods={foods} foodFeedback={feedback} onClose={() => setSelectedStallKey(null)} onFeedback={submitStallFeedback} />}
     </div>
   );
 }
