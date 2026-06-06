@@ -278,4 +278,5 @@ If custom test scripts are added, document them here.
 - Do not add banned features.
 - Do not refactor unrelated files.
 - Do not introduce a database or auth unless asked.
+- 每次进行分支提交、创建分支、交付分支或说明分支用途时，必须提供较为完整的分支简介，说明目标、主要改动、影响范围、验证情况和剩余风险；不要只写一句简短提交标题。
 - Update this file if the project structure or commands change.
