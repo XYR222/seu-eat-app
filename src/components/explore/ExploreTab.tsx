@@ -1,7 +1,8 @@
 import { Chip } from "@/components/ui/Chip";
+import { FoodDetailSheet } from "@/components/food/FoodDetailSheet";
 import { MetricPill } from "@/components/ui/MetricPill";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { applyFeedbackAction } from "@/lib/feedback";
+import { applyFoodDetailFeedback } from "@/lib/food-detail";
 import type { Food, FoodFeedback, UserMemory } from "@/types";
 import { useState } from "react";
 
@@ -30,10 +31,9 @@ export function ExploreTab({
   const popular = [...foods].sort((a, b) => b.feedback.likes - b.feedback.dislikes - (a.feedback.likes - a.feedback.dislikes)).slice(0, 5);
 
   const submitFeedback = (foodId: string, type: "like" | "dislike" | "tag", tag?: string) => {
-    const next = applyFeedbackAction(feedback, type === "tag" ? { type, foodId, tag: tag ?? "出餐快" } : { type, foodId });
-    setFeedback(next);
-    if (type === "dislike") onMemoryPatch({ avoidFoods: [foodId] });
-    if (tag === "偏咸" || tag === "偏辣" || tag === "油腻") onMemoryPatch({ avoidTags: [tag] });
+    const result = applyFoodDetailFeedback(feedback, type === "tag" ? { type, foodId, tag: tag ?? "出餐快" } : { type, foodId });
+    setFeedback(result.feedback);
+    onMemoryPatch(result.memoryPatch);
   };
 
   return (
@@ -102,71 +102,7 @@ export function ExploreTab({
           </button>
         ))}
       </section>
-      {selected && (
-        <div className="fixed inset-0 z-20 flex items-end bg-stone-950/35 px-3 pb-3 backdrop-blur-[2px]" onClick={() => setSelected(null)}>
-          <div className="max-h-[84vh] w-full overflow-auto rounded-[1.7rem] bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-stone-200" />
-            <div className="mb-3 flex items-start justify-between">
-              <div>
-                <p className="text-xs font-black text-orange-600">菜品详情</p>
-                <h2 className="mt-1 text-2xl font-black leading-tight text-stone-950">{selected.name}</h2>
-                <p className="mt-1 text-sm text-stone-500">
-                  {selected.canteen} · {selected.stall}
-                </p>
-              </div>
-              <button className="flex h-9 w-9 items-center justify-center rounded-full bg-stone-100 text-xl text-stone-500" onClick={() => setSelected(null)} type="button">
-                ×
-              </button>
-            </div>
-            <MetricPill tone="red">¥{selected.price}</MetricPill>
-            <p className="text-sm leading-6 text-stone-600">{selected.description}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {selected.tags.map((tag) => (
-                <Chip key={tag}>{tag}</Chip>
-              ))}
-            </div>
-            <div className="mt-4 rounded-[1.25rem] border border-stone-100 bg-stone-50 p-3">
-              <p className="text-sm font-black text-stone-950">学生反馈</p>
-              <p className="mt-1 text-xs text-stone-500">
-                👍{selected.feedback.likes} 👎{selected.feedback.dislikes}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {Object.entries(selected.feedback.tagVotes)
-                  .filter(([, count]) => count > 0)
-                  .sort((a, b) => b[1] - a[1])
-                  .slice(0, 6)
-                  .map(([tag, count]) => (
-                    <Chip key={tag}>
-                      {tag} {count}
-                    </Chip>
-                  ))}
-              </div>
-              <div className="mt-3 space-y-2">
-                {selected.feedback.comments.slice(0, 3).map((comment) => (
-                  <p className="rounded-md bg-white px-3 py-2 text-xs leading-5 text-stone-600" key={comment}>
-                    “{comment}”
-                  </p>
-                ))}
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <button className="rounded-2xl bg-emerald-700 py-2.5 text-sm font-black text-white shadow-sm" onClick={() => submitFeedback(selected.id, "like")} type="button">
-                点赞
-              </button>
-              <button className="rounded-2xl border border-stone-200 bg-white py-2.5 text-sm font-bold" onClick={() => submitFeedback(selected.id, "dislike")} type="button">
-                不推荐
-              </button>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {["偏咸", "偏辣", "出餐快", "性价比高", "量大", "适合减脂"].map((tag) => (
-                <Chip key={tag} onClick={() => submitFeedback(selected.id, "tag", tag)} tone={tag.includes("偏") ? "red" : "green"}>
-                  {tag}
-                </Chip>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {selected && <FoodDetailSheet food={selected} onClose={() => setSelected(null)} onFeedback={submitFeedback} />}
     </div>
   );
 }

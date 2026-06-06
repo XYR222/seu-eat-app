@@ -1,8 +1,10 @@
 import { Chip } from "@/components/ui/Chip";
+import { FoodDetailSheet } from "@/components/food/FoodDetailSheet";
 import { MetricPill } from "@/components/ui/MetricPill";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { foodItems } from "@/data/foods";
 import { drawMealCards } from "@/lib/draw";
+import { applyFoodDetailFeedback } from "@/lib/food-detail";
 import type { DrawCard, Food, FoodFeedback, UserMemory } from "@/types";
 import { useState } from "react";
 
@@ -11,16 +13,19 @@ type FoodWithFeedback = Food & { feedback: FoodFeedback };
 export function DrawMealTab({
   foods,
   feedback,
+  setFeedback,
   memory,
   onMemoryPatch,
 }: {
   foods: FoodWithFeedback[];
   feedback: FoodFeedback[];
+  setFeedback: (items: FoodFeedback[]) => void;
   memory: UserMemory;
   onMemoryPatch: (patch: Partial<UserMemory>) => void;
 }) {
   const [cards, setCards] = useState<DrawCard[]>([]);
   const [drawCount, setDrawCount] = useState(0);
+  const [selected, setSelected] = useState<FoodWithFeedback | null>(null);
   const draw = () =>
     setCards((current) => {
       const next = drawMealCards(foodItems, feedback, memory, { previousFoodIds: current.map((card) => card.foodId) });
@@ -36,6 +41,11 @@ export function DrawMealTab({
     safe: { wrap: "border-emerald-200 bg-emerald-50/70", pill: "green", label: "低踩雷" },
     explore: { wrap: "border-orange-200 bg-orange-50/80", pill: "amber", label: "换窗口" },
     surprise: { wrap: "border-yellow-200 bg-yellow-50/90", pill: "dark", label: "随机感" },
+  };
+  const submitFeedback = (foodId: string, type: "like" | "dislike" | "tag", tag?: string) => {
+    const result = applyFoodDetailFeedback(feedback, type === "tag" ? { type, foodId, tag: tag ?? "出餐快" } : { type, foodId });
+    setFeedback(result.feedback);
+    onMemoryPatch(result.memoryPatch);
   };
 
   return (
@@ -67,7 +77,7 @@ export function DrawMealTab({
             if (!food) return null;
             const tone = toneMap[card.type];
             return (
-              <article key={card.type} className={`rounded-[1.45rem] border p-4 shadow-[0_14px_32px_rgba(41,37,30,0.08)] ${tone.wrap}`}>
+              <article key={card.type} className={`rounded-[1.45rem] border p-4 text-left shadow-[0_14px_32px_rgba(41,37,30,0.08)] transition active:scale-[0.99] ${tone.wrap}`} onClick={() => setSelected(food)}>
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-black text-stone-800">{card.title}</p>
                   <MetricPill tone={tone.pill}>{tone.label}</MetricPill>
@@ -87,7 +97,14 @@ export function DrawMealTab({
                   ))}
                 </div>
                 <p className="mt-3 rounded-2xl bg-white/70 px-3 py-2 text-sm leading-6 text-stone-700">{card.reason}</p>
-                <button className="mt-4 w-full rounded-2xl bg-emerald-700 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-800 active:scale-[0.99]" type="button" onClick={() => onMemoryPatch({ recentFoods: [food.id] })}>
+                <button
+                  className="mt-4 w-full rounded-2xl bg-emerald-700 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-800 active:scale-[0.99]"
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onMemoryPatch({ recentFoods: [food.id] });
+                  }}
+                >
                   就它了
                 </button>
               </article>
@@ -95,6 +112,7 @@ export function DrawMealTab({
           })
         )}
       </section>
+      {selected && <FoodDetailSheet food={selected} onClose={() => setSelected(null)} onFeedback={submitFeedback} />}
     </div>
   );
 }

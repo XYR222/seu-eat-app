@@ -58,7 +58,7 @@ export function AppShell() {
       <div className="mx-auto min-h-screen max-w-md px-4 pb-28 pt-5">
         {tab === "ai" && <AiRecommendTab foods={foods} memory={memory} onMemoryPatch={updateMemory} onMemoryRemove={removeMemory} onMemoryClear={clearMemory} />}
         {tab === "explore" && <ExploreTab foods={foods} feedback={feedback} setFeedback={setFeedback} onMemoryPatch={updateMemory} />}
-        {tab === "draw" && <DrawMealTab foods={foods} feedback={feedback} memory={memory} onMemoryPatch={updateMemory} />}
+        {tab === "draw" && <DrawMealTab foods={foods} feedback={feedback} setFeedback={setFeedback} memory={memory} onMemoryPatch={updateMemory} />}
       </div>
       <BottomTabs tab={tab} setTab={setTab} />
     </main>
